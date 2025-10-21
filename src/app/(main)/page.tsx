@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { Suspense, useMemo } from 'react';
@@ -80,14 +81,15 @@ function HomePageComponent() {
             featuredImageUrl: pg.featuredImageUrl,
         }));
         
+        let filteredGames = allGames;
         if (searchQuery) {
-            allGames = allGames.filter(game => game.title.toLowerCase().includes(searchQuery.toLowerCase()));
+            filteredGames = allGames.filter(game => game.title.toLowerCase().includes(searchQuery.toLowerCase()));
         }
         
-        const featured = allGames.filter(g => g.featuredImageUrl);
-        const regular = allGames.filter(g => !g.featuredImageUrl);
+        const featured = filteredGames.filter(g => g.featuredImageUrl);
 
-        return { featuredGames: featured, regularGames: regular };
+        // Regular games should be ALL games that match the search, not just non-featured ones.
+        return { featuredGames: featured, regularGames: filteredGames };
     }, [publishedGames, searchQuery]);
 
   return (
