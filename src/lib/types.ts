@@ -9,4 +9,5 @@ export type Game = {
   description: string;
   coverImage: ImagePlaceholder['imageUrl'];
   imageHint: ImagePlaceholder['imageHint'];
+  downloadUrl?: string;
 };

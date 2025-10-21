@@ -28,6 +28,7 @@ interface PublishedGame {
   id: string;
   gameName: string;
   iconUrl: string;
+  downloadUrl: string;
   [key: string]: any;
 }
 
@@ -56,6 +57,7 @@ function HomePageComponent() {
             description: 'A user published game.',
             coverImage: pg.iconUrl,
             imageHint: 'user game',
+            downloadUrl: pg.downloadUrl,
         }));
 
         return transformedGames;

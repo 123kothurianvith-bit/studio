@@ -23,6 +23,12 @@ export default function GameCard({ game }: GameCardProps) {
       addToWishlist(game.id);
     }
   };
+
+  const handleInstallClick = () => {
+    if (game.downloadUrl) {
+      window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
   
   return (
     <Card className="flex h-full transform flex-col overflow-hidden bg-card transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20">
@@ -60,7 +66,7 @@ export default function GameCard({ game }: GameCardProps) {
       </CardContent>
       <CardFooter>
         <div className="flex w-full items-center justify-end">
-          <Button>Install</Button>
+          <Button onClick={handleInstallClick} disabled={!game.downloadUrl}>Install</Button>
         </div>
       </CardFooter>
     </Card>
