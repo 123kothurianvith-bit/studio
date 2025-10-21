@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useFirestore, useUser, FirebaseClientProvider, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { generateGameDescription } from '@/ai/flows/generate-game-description';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,8 +20,16 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload, Frown } from 'lucide-react';
+import { Loader2, Upload, Frown, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const formSchema = z.object({
@@ -29,12 +38,19 @@ const formSchema = z.object({
   iconUrl: z.string().url({ message: 'Please enter a valid URL for the game icon.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
   featuredImageUrl: z.string().url({ message: 'Please enter a valid URL for the featured image.' }).optional().or(z.literal('')),
+  // AI fields
+  genre: z.enum(['Action', 'RPG', 'Strategy', 'Adventure', 'Sports']),
+  keyFeatures: z.string().min(10, { message: "Please list at least one key feature." }),
+  targetAudience: z.string().min(3, { message: "Please describe the target audience." }),
+  description: z.string().min(10, { message: 'Description must be at least 10 characters long.'}),
+  whatsNew: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 function PublishComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
@@ -54,8 +70,51 @@ function PublishComponent() {
       iconUrl: '',
       downloadUrl: '',
       featuredImageUrl: '',
+      keyFeatures: "",
+      targetAudience: "",
+      description: "",
+      whatsNew: "",
     },
   });
+
+  async function handleGenerateDescription() {
+    const { gameName, genre, keyFeatures, targetAudience } = form.getValues();
+    if (!gameName || !genre || !keyFeatures || !targetAudience) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill out Game Name, Genre, Key Features, and Target Audience before generating a description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const result = await generateGameDescription({
+        title: gameName,
+        platform: 'Android',
+        genre,
+        keyFeatures,
+        targetAudience,
+      });
+      if (result.description) {
+        form.setValue("description", result.description, { shouldValidate: true });
+        toast({
+          title: "Description Generated!",
+          description: "The AI has generated a description for your game.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to generate description:", error);
+      toast({
+        title: "Generation Failed",
+        description: "There was an error generating the description. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     if (!firestore || !user) {
@@ -76,6 +135,7 @@ function PublishComponent() {
     let developerData;
     const gameData = {
         ...values,
+        id: newGameRef.id,
         publisherId: user.uid,
         downloads: 0,
         averageRating: 0,
@@ -151,7 +211,7 @@ function PublishComponent() {
                     Publish a New Game
                 </CardTitle>
                 <CardDescription>
-                    Fill in the details below to publish your game to the store.
+                    Fill in the details below to publish your game to the store. Use AI to help with the description!
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,6 +286,108 @@ function PublishComponent() {
                         </FormItem>
                         )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="genre"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Genre</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select a genre" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  <SelectItem value="Action">Action</SelectItem>
+                                  <SelectItem value="RPG">RPG</SelectItem>
+                                  <SelectItem value="Strategy">Strategy</SelectItem>
+                                  <SelectItem value="Adventure">Adventure</SelectItem>
+                                  <SelectItem value="Sports">Sports</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="targetAudience"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Target Audience</FormLabel>
+                          <FormControl>
+                              <Input placeholder="e.g., Fans of classic RPGs, Competitive players" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="keyFeatures"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Key Features</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="e.g., Deep customization, Fast-paced combat, Branching narrative"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Enter a comma-separated list of key features for the AI.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Game Description</FormLabel>
+                            <Button type="button" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}>
+                              {isGenerating ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Sparkles className="mr-2 h-4 w-4" />
+                              )}
+                              Generate with AI
+                            </Button>
+                          </div>
+                          <FormControl>
+                            <Textarea
+                              placeholder="A detailed description of the game will appear here..."
+                              className="min-h-[150px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                     <FormField
+                        control={form.control}
+                        name="whatsNew"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>What's New (Optional)</FormLabel>
+                                <FormControl>
+                                    <Textarea className="min-h-[120px]" placeholder="e.g., Bug fixes, new levels, performance improvements..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -249,3 +411,5 @@ export default function PublishPage() {
         </FirebaseClientProvider>
     )
 }
+
+    
