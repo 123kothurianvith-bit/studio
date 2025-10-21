@@ -16,6 +16,8 @@ export type Game = {
   developerName?: string;
   isFeatured?: boolean;
   featuredDescription?: string;
+  featuredImageUrl?: string;
+  iconUrl?: string;
 };
 
     

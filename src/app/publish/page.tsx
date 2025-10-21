@@ -38,8 +38,10 @@ const formSchema = z.object({
   gameName: z.string().min(2, { message: 'Game name must be at least 2 characters.' }),
   developerName: z.string().min(2, { message: 'Developer name must be at least 2 characters.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
+  iconUrl: z.string().url().optional(),
   isFeatured: z.boolean().optional(),
   featuredDescription: z.string().optional(),
+  featuredImageUrl: z.string().url().optional(),
   // AI fields
   genre: z.enum(['Action', 'RPG', 'Strategy', 'Adventure', 'Sports']),
   keyFeatures: z.string().min(10, { message: "Please list at least one key feature." }),
@@ -54,6 +56,22 @@ const formSchema = z.object({
 }, {
     message: "Featured description must be at least 10 characters long when game is featured.",
     path: ["featuredDescription"],
+}).refine(data => {
+    if (data.isFeatured && (!data.featuredImageUrl)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Featured background image URL is required when game is featured.",
+    path: ["featuredImageUrl"],
+}).refine(data => {
+    if (data.isFeatured && (!data.iconUrl)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Game icon URL is required when game is featured.",
+    path: ["iconUrl"],
 });
 
 
@@ -73,8 +91,10 @@ function PublishComponent() {
       gameName: '',
       developerName: '',
       downloadUrl: '',
+      iconUrl: '',
       isFeatured: false,
       featuredDescription: '',
+      featuredImageUrl: '',
       keyFeatures: "",
       targetAudience: "",
       description: "",
@@ -290,7 +310,8 @@ function PublishComponent() {
                     />
 
                     {isFeaturedValue && (
-                        <FormField
+                       <div className="space-y-6 rounded-md border p-4">
+                         <FormField
                             control={form.control}
                             name="featuredDescription"
                             render={({ field }) => (
@@ -304,6 +325,35 @@ function PublishComponent() {
                             </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="featuredImageUrl"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Featured Background Image URL</FormLabel>
+                                <FormControl>
+                                <Input placeholder="https://example.com/background.png" {...field} />
+                                </FormControl>
+                                <FormDescription>The background image for the large featured card.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="iconUrl"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Game Icon URL</FormLabel>
+                                <FormControl>
+                                <Input placeholder="https://example.com/icon.png" {...field} />
+                                </FormControl>
+                                <FormDescription>The small icon for the featured card details.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                       </div>
                     )}
 
 
@@ -431,5 +481,3 @@ export default function PublishPage() {
         </FirebaseClientProvider>
     )
 }
-
-    

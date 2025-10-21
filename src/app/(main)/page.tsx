@@ -21,11 +21,7 @@ function GameBrowserLoader() {
     <div className="space-y-4 px-4">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex items-center space-x-4">
-          <Skeleton className="h-16 w-16 rounded-2xl" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
+          <Skeleton className="h-10 w-3/4" />
           <Skeleton className="h-10 w-24 rounded-full" />
         </div>
       ))}
@@ -43,6 +39,8 @@ interface PublishedGame {
   developerName: string;
   isFeatured?: boolean;
   featuredDescription?: string;
+  featuredImageUrl?: string;
+  iconUrl?: string;
   [key: string]: any;
 }
 
@@ -78,6 +76,8 @@ function HomePageComponent() {
             developerName: pg.developerName,
             isFeatured: pg.isFeatured,
             featuredDescription: pg.featuredDescription,
+            featuredImageUrl: pg.featuredImageUrl,
+            iconUrl: pg.iconUrl,
         }));
         
         let filteredGames = allGames;
@@ -143,5 +143,3 @@ export default function HomePage() {
     </Suspense>
   )
 }
-
-    
