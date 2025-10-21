@@ -15,15 +15,15 @@ import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carouse
 
 function GameBrowserLoader() {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="space-y-4 px-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="space-y-4">
-          <Skeleton className="h-[200px] w-full rounded-xl" />
-          <div className="space-y-2">
+        <div key={i} className="flex items-center space-x-4">
+          <Skeleton className="h-16 w-16 rounded-2xl" />
+          <div className="flex-1 space-y-2">
             <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-4 w-1/4" />
           </div>
+          <Skeleton className="h-10 w-24 rounded-full" />
         </div>
       ))}
     </div>
@@ -82,16 +82,16 @@ function HomePageComponent() {
     }, [publishedGames]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-8">
       <GameSearch />
 
       {featuredGames.length > 0 && (
           <div className="space-y-4">
-              <h2 className="text-2xl font-bold tracking-tight">Featured Games</h2>
+              <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
               <Carousel opts={{ loop: true }} className="w-full">
-                  <CarouselContent>
+                  <CarouselContent className="-ml-2">
                       {featuredGames.map(game => (
-                          <CarouselItem key={game.id}>
+                          <CarouselItem key={game.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
                               <FeaturedGameCard game={game} />
                           </CarouselItem>
                       ))}
@@ -100,9 +100,12 @@ function HomePageComponent() {
           </div>
       )}
 
-      <Suspense fallback={<GameBrowserLoader />}>
-        <GameBrowser allGames={regularGames} />
-      </Suspense>
+      <div className="space-y-4">
+        <h2 className="px-4 text-2xl font-bold tracking-tight">All Games</h2>
+        <Suspense fallback={<GameBrowserLoader />}>
+          <GameBrowser allGames={regularGames} />
+        </Suspense>
+      </div>
     </div>
   );
 }

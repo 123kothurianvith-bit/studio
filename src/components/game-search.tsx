@@ -2,13 +2,27 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
-import { Search } from 'lucide-react';
+import { Search, Heart, User } from 'lucide-react';
 import { Input } from './ui/input';
+import { Button } from './ui/button';
+import Link from 'next/link';
+import { useUser } from '@/firebase';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 
 export default function GameSearch() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useUser();
 
   const handleFilterChange = (key: string, value: string | null) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
@@ -29,15 +43,70 @@ export default function GameSearch() {
     handleFilterChange('q', term);
   }, 300);
 
+  const getInitials = (email?: string | null) => {
+    return email ? email.substring(0, 2).toUpperCase() : '??';
+  }
+
   return (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <Input
-        placeholder="Search games..."
-        className="w-full rounded-full bg-muted pl-9"
-        defaultValue={searchParams.get('q') || ''}
-        onChange={(e) => handleSearch(e.target.value)}
-      />
-    </div>
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search games..."
+          className="w-full rounded-full bg-muted pl-9"
+          defaultValue={searchParams.get('q') || ''}
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+      </div>
+      <Button asChild variant="ghost" size="icon">
+        <Link href="/wishlist">
+          <Heart />
+          <span className="sr-only">Wishlist</span>
+        </Link>
+      </Button>
+      {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                  <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.photoURL || undefined} alt="User avatar" />
+                      <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                  </Avatar>
+                  <span className="sr-only">User Menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+             <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/')}>
+                Home
+              </DropdownMenuItem>
+              {user.profile?.role === 'developer' && (
+                <>
+                  <DropdownMenuItem onClick={() => router.push('/my-apps')}>
+                    My Apps
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/publish')}>
+                    Publish Game
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => router.push('/analytics')}>
+                    Analytics
+                  </DropdownMenuItem>
+                </>
+              )}
+               <DropdownMenuItem onClick={() => router.push('/wishlist')}>
+                Wishlist
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+      ) : (
+        <Button asChild variant="ghost" size="icon">
+          <Link href="/login">
+            <User />
+             <span className="sr-only">Login</span>
+          </Link>
+        </Button>
+      )}
+    </header>
   );
 }
