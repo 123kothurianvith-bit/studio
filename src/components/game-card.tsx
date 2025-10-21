@@ -56,7 +56,7 @@ export default function GameCard({ game }: GameCardProps) {
             {game.averageRating ? <Star className="h-4 w-4 fill-primary text-primary" /> : null}
           </div>
         </div>
-        <Button onClick={handleInstallClick} size="sm" disabled={!game.downloadUrl} variant="outline" className="rounded-full">
+        <Button onClick={handleInstallClick} size="sm" disabled={!game.downloadUrl} className="rounded-full">
             Install
         </Button>
     </div>

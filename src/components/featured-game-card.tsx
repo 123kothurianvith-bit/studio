@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from './ui/card';
+import { Card } from './ui/card';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -54,9 +54,9 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
   return (
     <Card
       onClick={handleCardClick}
-      className="group w-full cursor-pointer overflow-hidden rounded-2xl border-0 shadow-lg transition-all"
+      className={cn("group w-full cursor-pointer overflow-hidden rounded-2xl border-0 shadow-lg transition-all bg-gradient-to-br", cardGradient)}
     >
-      <div className={cn("relative flex aspect-[16/9] w-full flex-col justify-between bg-gradient-to-br p-4", cardGradient)}>
+      <div className="relative flex aspect-[16/9] w-full flex-col justify-between p-4">
         <div className="flex-1">
            <h3 className="text-xl font-bold text-white drop-shadow-md">
                 {game.featuredDescription}
@@ -71,7 +71,7 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                 </div>
             </div>
-            <Button onClick={handleInstallClick} size="sm" className="shrink-0 rounded-full bg-white text-black hover:bg-white/90" disabled={!game.downloadUrl}>
+            <Button onClick={handleInstallClick} size="sm" className="shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={!game.downloadUrl}>
                 Install
             </Button>
         </div>
