@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "cosmic-rift",
+      "description": "A spaceship in the middle of a cosmic anomaly.",
+      "imageUrl": "https://images.unsplash.com/photo-1705594975210-02cbcc7af5ad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzcGFjZSUyMGJhdHRsZXxlbnwwfHx8fDE3NjA5NzAzNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "space battle"
+    },
+    {
+      "id": "echoes-of-etheria",
+      "description": "A mystical forest with glowing fauna.",
+      "imageUrl": "https://images.unsplash.com/photo-1432958576632-8a39f6b97dc7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxmYW50YXN5JTIwZm9yZXN0fGVufDB8fHx8MTc2MDk1NTQ3N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy forest"
+    },
+    {
+      "id": "cyber-sentinel",
+      "description": "A cyborg ninja overlooking a futuristic city.",
+      "imageUrl": "https://images.unsplash.com/photo-1707999464758-0ad86b14290f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjeWJlcnB1bmslMjBjaXR5fGVufDB8fHx8MTc2MDk1NDMxOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cyberpunk city"
+    },
+    {
+      "id": "path-of-the-ronin",
+      "description": "A lone samurai walking through a bamboo forest.",
+      "imageUrl": "https://images.unsplash.com/photo-1685132160055-da17a3f57701?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzYW11cmFpJTIwd2FycmlvcnxlbnwwfHx8fDE3NjA5ODU0MTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "samurai warrior"
+    },
+    {
+      "id": "gridiron-glory-2k24",
+      "description": "An American football player mid-action on the field.",
+      "imageUrl": "https://images.unsplash.com/photo-1537882111161-c3379a777c8b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbWVyaWNhbiUyMGZvb3RiYWxsfGVufDB8fHx8MTc2MDk3NTc5NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "american football"
+    },
+    {
+      "id": "aether-odyssey",
+      "description": "A floating island in a sea of clouds.",
+      "imageUrl": "https://images.unsplash.com/photo-1562636794-bffd036201b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxza3klMjBmYW50YXN5fGVufDB8fHx8MTc2MTAzMTIzNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sky fantasy"
+    },
+    {
+      "id": "neon-overdrive",
+      "description": "A retro-futuristic car racing through a neon-lit city.",
+      "imageUrl": "https://images.unsplash.com/photo-1760112783646-cd412a030da9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzeW50aHdhdmUlMjByYWNlfGVufDB8fHx8MTc2MTAzMTIzNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "synthwave race"
+    },
+    {
+      "id": "frontier-fortress",
+      "description": "A medieval castle under siege.",
+      "imageUrl": "https://images.unsplash.com/photo-1684024306673-4f8bc758eb95?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYXN0bGUlMjBzaWVnZXxlbnwwfHx8fDE3NjEwMzEyMzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "castle siege"
+    }
+  ]
 }
