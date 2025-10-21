@@ -12,10 +12,9 @@ import type { Game } from '@/lib/types';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { Frown, Loader2, ServerCrash } from 'lucide-react';
+import { Frown } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Autoplay from "embla-carousel-autoplay";
-import { searchGames } from '@/ai/flows/search-games';
 
 
 function GameBrowserLoader() {
@@ -52,11 +51,6 @@ function HomePageComponent() {
     const searchQuery = searchParams.get('q');
     const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }))
 
-    const [isAiSearching, setIsAiSearching] = useState(false);
-    const [aiSearchResults, setAiSearchResults] = useState<Game[]>([]);
-    const [aiSearchError, setAiSearchError] = useState<string | null>(null);
-
-
     const publishedGamesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return collection(firestore, 'publishedGames');
@@ -84,45 +78,16 @@ function HomePageComponent() {
         }));
     }, [publishedGames]);
 
-    useEffect(() => {
-        const performAiSearch = async () => {
-            if (searchQuery && allGames.length > 0) {
-                setIsAiSearching(true);
-                setAiSearchResults([]);
-                setAiSearchError(null);
-
-                const maxRetries = 3;
-                for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                    try {
-                        const gameSearchSpace = allGames.map(g => ({ id: g.id, title: g.title, description: g.description, genre: g.genre }));
-                        const result = await searchGames({ query: searchQuery, games: gameSearchSpace });
-                        const resultMap = new Map(allGames.map(g => [g.id, g]));
-                        const foundGames = result.gameIds.map(id => resultMap.get(id)).filter((g): g is Game => !!g);
-                        setAiSearchResults(foundGames);
-                        setAiSearchError(null); // Clear error on success
-                        break; // Exit loop on success
-                    } catch (error: any) {
-                        console.error(`AI search attempt ${attempt} failed:`, error);
-                        if (attempt === maxRetries) {
-                            setAiSearchResults([]);
-                            // Check if the error message indicates a service availability issue
-                            if (error.message && (error.message.includes('503') || error.message.toLowerCase().includes('overloaded'))) {
-                                setAiSearchError("The AI service is currently overloaded. Please try again in a few moments.");
-                            } else {
-                                setAiSearchError("An unexpected error occurred during the AI search.");
-                            }
-                        } else {
-                            // Wait a bit before retrying
-                            await new Promise(res => setTimeout(res, 1000 * attempt));
-                        }
-                    }
-                }
-                setIsAiSearching(false);
-            }
-        };
-
-        performAiSearch();
-    }, [searchQuery, allGames]);
+    const filteredGames = useMemo(() => {
+        if (!searchQuery) {
+            return allGames;
+        }
+        return allGames.filter(game =>
+            game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            game.developerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            game.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [allGames, searchQuery]);
 
 
     const { featuredGames, popularGames } = useMemo(() => {
@@ -136,52 +101,11 @@ function HomePageComponent() {
         return { featuredGames: featured, popularGames: popular };
     }, [allGames, publishedGames]);
 
-  if (searchQuery) {
-    return (
-        <div className="space-y-8 pb-8">
-            <GameSearch />
-             <div className="space-y-4">
-                <h2 className="px-4 text-2xl font-bold tracking-tight">Search Results for "{searchQuery}"</h2>
-                <div className="flex flex-col gap-4 px-4">
-                {isAiSearching ? (
-                    <div className="flex h-[40vh] flex-col items-center justify-center">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                        <p className="mt-4 text-muted-foreground">Searching with AI...</p>
-                    </div>
-                ) : aiSearchError ? (
-                     <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-destructive/50 bg-card p-12 text-center">
-                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-                        <ServerCrash className="h-8 w-8 text-destructive" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-destructive">Search Unavailable</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            {aiSearchError}
-                        </p>
-                    </div>
-                ) : aiSearchResults.length > 0 ? (
-                    aiSearchResults.map((game) => <GameCard key={game.id} game={game} />)
-                ) : (
-                    <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
-                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                        <Frown className="h-8 w-8 text-primary" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-foreground">No Games Found</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            We couldn't find any games matching your search. Try another query!
-                        </p>
-                    </div>
-                )}
-                </div>
-            </div>
-        </div>
-    )
-  }
-
   return (
     <div className="space-y-8 pb-8">
       <GameSearch />
 
-      {featuredGames.length > 0 && (
+      {!searchQuery && featuredGames.length > 0 && (
           <div className="space-y-4">
               <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
               <Carousel 
@@ -203,12 +127,12 @@ function HomePageComponent() {
       )}
       
       <div className="space-y-4">
-        <h2 className="px-4 text-2xl font-bold tracking-tight">For you</h2>
+        <h2 className="px-4 text-2xl font-bold tracking-tight">{searchQuery ? `Results for "${searchQuery}"` : "For you"}</h2>
         <div className="flex flex-col gap-4 px-4">
           {isLoading ? (
              <GameBrowserLoader />
-          ) : allGames.length > 0 ? (
-            allGames.map((game) => <GameCard key={game.id} game={game} />)
+          ) : filteredGames.length > 0 ? (
+            filteredGames.map((game) => <GameCard key={game.id} game={game} />)
           ) : (
              <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -223,7 +147,7 @@ function HomePageComponent() {
         </div>
       </div>
 
-      {popularGames.length > 0 && (
+      {!searchQuery && popularGames.length > 0 && (
         <div className="space-y-4">
             <h2 className="px-4 text-2xl font-bold tracking-tight">What's buzzing</h2>
             <div className="flex flex-col gap-4 px-4">
