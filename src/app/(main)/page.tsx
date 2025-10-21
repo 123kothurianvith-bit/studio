@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense, useMemo } from 'react';
-import GameBrowser from '@/components/game-browser';
+import GameCard from '@/components/game-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import GameSearch from '@/components/game-search';
 import { useCollection } from '@/firebase/firestore/use-collection';
@@ -11,6 +11,7 @@ import type { Game } from '@/lib/types';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Frown } from 'lucide-react';
 
 
 function GameBrowserLoader() {
@@ -102,10 +103,20 @@ function HomePageComponent() {
 
       <div className="space-y-4">
         <h2 className="px-4 text-2xl font-bold tracking-tight">All Games</h2>
-        <div className="flex flex-col gap-4">
-            <Suspense fallback={<GameBrowserLoader />}>
-              <GameBrowser allGames={regularGames} />
-            </Suspense>
+        <div className="flex flex-col gap-4 px-4">
+          {regularGames.length > 0 ? (
+            regularGames.map((game) => <GameCard key={game.id} game={game} />)
+          ) : (
+             <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <Frown className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground">No Games Found</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    Try adjusting your search or filter criteria, or publish a new game!
+                </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
