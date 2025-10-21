@@ -21,7 +21,6 @@ import Link from 'next/link';
 interface PublishedGame {
   id: string;
   gameName: string;
-  iconUrl: string;
   downloadUrl: string;
   description: string;
   publisherId: string;
@@ -29,7 +28,6 @@ interface PublishedGame {
 }
 
 const formSchema = z.object({
-  iconUrl: z.string().url({ message: 'Please enter a valid URL for the game icon.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   whatsNew: z.string().optional(),
@@ -56,7 +54,6 @@ function EditGameComponent() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      iconUrl: '',
       downloadUrl: '',
       description: '',
       whatsNew: '',
@@ -66,7 +63,6 @@ function EditGameComponent() {
   useEffect(() => {
     if (game) {
       form.reset({
-        iconUrl: game.iconUrl,
         downloadUrl: game.downloadUrl,
         description: game.description,
         whatsNew: game.whatsNew || '',
@@ -135,19 +131,6 @@ function EditGameComponent() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField
                             control={form.control}
-                            name="iconUrl"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Icon URL</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
                             name="downloadUrl"
                             render={({ field }) => (
                                 <FormItem>
@@ -205,3 +188,5 @@ export default function EditGamePage() {
         </FirebaseClientProvider>
     )
 }
+
+    

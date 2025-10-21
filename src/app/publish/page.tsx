@@ -37,7 +37,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formSchema = z.object({
   gameName: z.string().min(2, { message: 'Game name must be at least 2 characters.' }),
   developerName: z.string().min(2, { message: 'Developer name must be at least 2 characters.' }),
-  iconUrl: z.string().url({ message: 'Please enter a valid URL for the game icon.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
   isFeatured: z.boolean().optional(),
   featuredDescription: z.string().optional(),
@@ -73,7 +72,6 @@ function PublishComponent() {
     defaultValues: {
       gameName: '',
       developerName: '',
-      iconUrl: '',
       downloadUrl: '',
       isFeatured: false,
       featuredDescription: '',
@@ -249,20 +247,6 @@ function PublishComponent() {
                             <Input placeholder="e.g., Snapter Studios" {...field} />
                             </FormControl>
                             <FormDescription>This will be your public developer name.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="iconUrl"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Game Icon URL</FormLabel>
-                            <FormControl>
-                            <Input placeholder="https://example.com/icon.png" {...field} />
-                            </FormControl>
-                            <FormDescription>The URL for your game's icon (should be a square image).</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -447,3 +431,5 @@ export default function PublishPage() {
         </FirebaseClientProvider>
     )
 }
+
+    

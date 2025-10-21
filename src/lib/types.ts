@@ -1,4 +1,5 @@
 
+
 import type { ImagePlaceholder } from './placeholder-images';
 
 export type Game = {
@@ -8,7 +9,6 @@ export type Game = {
   price: number;
   genre: 'Action' | 'RPG' | 'Strategy' | 'Adventure' | 'Sports' | 'User Published';
   description: string;
-  coverImage: ImagePlaceholder['imageUrl'];
   imageHint: ImagePlaceholder['imageHint'];
   downloadUrl?: string;
   averageRating?: number;
@@ -17,3 +17,5 @@ export type Game = {
   isFeatured?: boolean;
   featuredDescription?: string;
 };
+
+    

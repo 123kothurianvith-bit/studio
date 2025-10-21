@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -5,10 +6,8 @@ import { useDoc } from '@/firebase/firestore/use-doc';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useFirestore, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Loader2, Gamepad, Frown, User } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Frown, User } from 'lucide-react';
 import GameCard from '@/components/game-card';
 import type { Game } from '@/lib/types';
 import { useMemo } from 'react';
@@ -23,7 +22,6 @@ interface DeveloperProfile {
 interface PublishedGame {
   id: string;
   gameName: string;
-  iconUrl: string;
   downloadUrl: string;
   description: string;
   averageRating: number;
@@ -59,7 +57,6 @@ function DeveloperProfilePageComponent() {
         price: 0,
         genre: 'User Published',
         description: pg.description || 'A user published game.',
-        coverImage: pg.iconUrl,
         imageHint: 'user game',
         downloadUrl: pg.downloadUrl,
         averageRating: pg.averageRating,
@@ -131,3 +128,5 @@ export default function DeveloperProfilePage() {
         </FirebaseClientProvider>
     )
 }
+
+    

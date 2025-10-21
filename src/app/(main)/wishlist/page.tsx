@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useWishlist } from '@/contexts/wishlist-context';
@@ -35,7 +36,6 @@ export default function WishlistPage() {
         price: 0,
         genre: 'User Published',
         description: game.description || 'A user published game.',
-        coverImage: game.iconUrl,
         imageHint: 'user game',
         downloadUrl: game.downloadUrl,
         averageRating: game.averageRating,
@@ -69,3 +69,5 @@ export default function WishlistPage() {
     </div>
   );
 }
+
+    

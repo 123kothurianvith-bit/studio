@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -19,7 +18,6 @@ import { Separator } from '@/components/ui/separator';
 interface PublishedGame {
   id: string;
   gameName: string;
-  iconUrl: string;
   downloadUrl: string;
   description: string;
   publisherId: string;
@@ -256,3 +254,5 @@ export default function GameDetailPage() {
         </FirebaseClientProvider>
     );
 }
+
+    

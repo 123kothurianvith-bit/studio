@@ -36,7 +36,6 @@ function GameBrowserLoader() {
 interface PublishedGame {
   id: string;
   gameName: string;
-  iconUrl: string;
   downloadUrl: string;
   description: string;
   averageRating: number;
@@ -72,7 +71,6 @@ function HomePageComponent() {
             price: 0, 
             genre: 'User Published', 
             description: pg.description || 'A user published game.',
-            coverImage: pg.iconUrl,
             imageHint: 'user game',
             downloadUrl: pg.downloadUrl,
             averageRating: pg.averageRating,
@@ -145,3 +143,5 @@ export default function HomePage() {
     </Suspense>
   )
 }
+
+    
