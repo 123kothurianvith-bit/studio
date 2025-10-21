@@ -102,9 +102,11 @@ function HomePageComponent() {
 
       <div className="space-y-4">
         <h2 className="px-4 text-2xl font-bold tracking-tight">All Games</h2>
-        <Suspense fallback={<GameBrowserLoader />}>
-          <GameBrowser allGames={regularGames} />
-        </Suspense>
+        <div className="flex flex-col gap-4">
+            <Suspense fallback={<GameBrowserLoader />}>
+              <GameBrowser allGames={regularGames} />
+            </Suspense>
+        </div>
       </div>
     </div>
   );
