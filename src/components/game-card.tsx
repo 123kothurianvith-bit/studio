@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import type { Game } from '@/lib/types';
 import Link from 'next/link';
+import { Star } from 'lucide-react';
 
 type GameCardProps = {
   game: Game;
@@ -11,20 +12,23 @@ type GameCardProps = {
 export default function GameCard({ game }: GameCardProps) {
   
   return (
-    <Link href={`/game/${game.id}`} className="group">
-      <div className="flex flex-col items-start gap-2">
-        <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
-          <Image
-            src={game.coverImage}
-            alt={game.title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint={game.imageHint}
-          />
-        </div>
-        <div className="w-full">
-            <p className="truncate text-sm font-medium text-foreground">{game.title}</p>
+    <Link href={`/game/${game.id}`} className="group flex items-center gap-4 rounded-lg p-2 transition-colors hover:bg-accent">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
+        <Image
+          src={game.coverImage}
+          alt={game.title}
+          fill
+          sizes="64px"
+          className="object-cover"
+          data-ai-hint={game.imageHint}
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-foreground">{game.title}</p>
+        <p className="text-sm text-muted-foreground">{game.genre}</p>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <span>{game.averageRating?.toFixed(1) ?? 'N/A'}</span>
+          <Star className="h-3 w-3 fill-current" />
         </div>
       </div>
     </Link>
