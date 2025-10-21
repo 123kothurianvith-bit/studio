@@ -133,7 +133,8 @@ function AnalyticsComponent() {
                         <BarChart data={comparisonData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} tick={{fontSize: 12}}/>
-                        <YAxis />
+                        <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
+                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" domain={[0, 5]}/>
                         <Tooltip
                             contentStyle={{
                                 background: 'hsl(var(--background))',
@@ -142,8 +143,8 @@ function AnalyticsComponent() {
                             }}
                         />
                         <Legend />
-                        <Bar dataKey="Downloads" fill="hsl(var(--primary))" />
-                        <Bar dataKey="Rating" yAxisId="right" fill="hsl(var(--accent))" />
+                        <Bar yAxisId="left" dataKey="Downloads" fill="hsl(var(--primary))" />
+                        <Bar yAxisId="right" dataKey="Rating" fill="hsl(var(--accent))" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
