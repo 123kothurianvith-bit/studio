@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState } from 'react';
-import { useFirestore, useUser, FirebaseClientProvider } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
+import { useFirestore, useUser, FirebaseClientProvider, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -60,51 +60,52 @@ function PublishComponent() {
     }
     setIsSubmitting(true);
     
-    try {
-      const developerRef = doc(firestore, 'developers', user.uid);
-      const gamesCollectionRef = collection(firestore, 'publishedGames');
+    const developerRef = doc(firestore, 'developers', user.uid);
+    const gamesCollectionRef = collection(firestore, 'publishedGames');
+    const newGameRef = doc(gamesCollectionRef); // Create a new doc ref with a unique ID
 
-      await runTransaction(firestore, async (transaction) => {
+    runTransaction(firestore, async (transaction) => {
         const devDoc = await transaction.get(developerRef);
 
-        // 1. Create or update developer profile
-        if (!devDoc.exists()) {
-          transaction.set(developerRef, {
+        const developerData = {
             developerName: values.developerName,
-            gameCount: 1,
-          });
-        } else {
-          const newGameCount = (devDoc.data().gameCount || 0) + 1;
-          transaction.update(developerRef, { gameCount: newGameCount });
-        }
+            gameCount: (devDoc.exists() ? devDoc.data().gameCount : 0) + 1,
+        };
 
-        // 2. Add the new game document
-        const newGameRef = doc(gamesCollectionRef); // Create a new doc ref with a unique ID
-        transaction.set(newGameRef, {
+        // 1. Create or update developer profile
+        transaction.set(developerRef, developerData, { merge: true });
+        
+        const gameData = {
             ...values,
             publisherId: user.uid,
             downloads: 0,
             averageRating: 0,
             ratings: [],
             createdAt: serverTimestamp(),
-        });
-      });
+        };
 
-      toast({
-        title: 'Game Published!',
-        description: `${values.gameName} is now live!`,
+        // 2. Add the new game document
+        transaction.set(newGameRef, gameData);
+      }).then(() => {
+        toast({
+          title: 'Game Published!',
+          description: `${values.gameName} is now live!`,
+        });
+        router.push('/my-apps');
+      }).catch((error: any) => {
+        const permissionError = new FirestorePermissionError({
+          path: newGameRef.path, 
+          operation: 'write', // Transactions can be complex, 'write' is a safe generalization
+          requestResourceData: {
+            developerProfile: developerData,
+            game: gameData,
+          }
+        });
+        errorEmitter.emit('permission-error', permissionError);
+
+      }).finally(() => {
+        setIsSubmitting(false);
       });
-      router.push('/my-apps');
-    } catch (error: any) {
-      console.error("Publishing Error: ", error);
-      toast({
-        title: 'Publishing Failed',
-        description: error.message || 'An unexpected error occurred.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   }
   
   return (
