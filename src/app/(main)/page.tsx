@@ -110,7 +110,7 @@ function HomePageComponent() {
       )}
 
       <div className="space-y-4">
-        <h2 className="px-4 text-2xl font-bold tracking-tight">All Games</h2>
+        <h2 className="px-4 text-2xl font-bold tracking-tight">For you</h2>
         <div className="flex flex-col gap-4 px-4">
           {isLoading ? (
              <GameBrowserLoader />
