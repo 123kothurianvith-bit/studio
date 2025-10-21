@@ -62,12 +62,24 @@ function PublishComponent() {
     
     const developerRef = doc(firestore, 'developers', user.uid);
     const gamesCollectionRef = collection(firestore, 'publishedGames');
-    const newGameRef = doc(gamesCollectionRef); // Create a new doc ref with a unique ID
+    const newGameRef = doc(gamesCollectionRef);
+
+    // Declare these variables outside the transaction scope
+    let developerData;
+    const gameData = {
+        ...values,
+        publisherId: user.uid,
+        downloads: 0,
+        averageRating: 0,
+        ratings: [],
+        createdAt: serverTimestamp(),
+    };
+
 
     runTransaction(firestore, async (transaction) => {
         const devDoc = await transaction.get(developerRef);
 
-        const developerData = {
+        developerData = {
             developerName: values.developerName,
             gameCount: (devDoc.exists() ? devDoc.data().gameCount : 0) + 1,
         };
@@ -75,17 +87,9 @@ function PublishComponent() {
         // 1. Create or update developer profile
         transaction.set(developerRef, developerData, { merge: true });
         
-        const gameData = {
-            ...values,
-            publisherId: user.uid,
-            downloads: 0,
-            averageRating: 0,
-            ratings: [],
-            createdAt: serverTimestamp(),
-        };
-
         // 2. Add the new game document
         transaction.set(newGameRef, gameData);
+
       }).then(() => {
         toast({
           title: 'Game Published!',
