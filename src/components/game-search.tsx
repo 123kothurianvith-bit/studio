@@ -5,6 +5,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { Search } from 'lucide-react';
 import { Input } from './ui/input';
 import Link from 'next/link';
+import { ThemeToggle } from './theme-toggle';
 
 export default function GameSearch() {
   const pathname = usePathname();
@@ -47,6 +48,7 @@ export default function GameSearch() {
           onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
+      <ThemeToggle />
     </header>
   );
 }
