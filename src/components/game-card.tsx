@@ -2,12 +2,9 @@
 
 import Image from 'next/image';
 import type { Game } from '@/lib/types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Heart, Download } from 'lucide-react';
-import { useWishlist } from '@/contexts/wishlist-context';
-import { cn } from '@/lib/utils';
-import { Badge } from './ui/badge';
+import { Download, Star } from 'lucide-react';
 import Link from 'next/link';
 
 type GameCardProps = {
@@ -15,18 +12,7 @@ type GameCardProps = {
 };
 
 export default function GameCard({ game }: GameCardProps) {
-  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
-
-  const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (isWishlisted(game.id)) {
-      removeFromWishlist(game.id);
-    } else {
-      addToWishlist(game.id);
-    }
-  };
-
+  
   const handleInstallClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -36,45 +22,47 @@ export default function GameCard({ game }: GameCardProps) {
   };
   
   return (
-    <Link href={`/game/${game.id}`} className="h-full">
-      <Card className="flex h-full transform flex-col overflow-hidden bg-card transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20">
-        <div className="relative h-80 w-full">
+    <Link href={`/game/${game.id}`} className="h-full group">
+      <Card className="flex h-full transform flex-col overflow-hidden bg-card transition-all duration-300 hover:shadow-xl">
+        <div className="relative h-40 w-full">
           <Image
             src={game.coverImage}
             alt={game.title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint={game.imageHint}
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-10 w-10 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
-            onClick={handleWishlistToggle}
-            aria-label={isWishlisted(game.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-          >
-            <Heart className={cn("h-5 w-5", isWishlisted(game.id) ? 'fill-accent text-accent' : 'text-white')} />
-          </Button>
         </div>
-        <CardHeader>
-          <CardTitle className="truncate text-xl">{game.title}</CardTitle>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <Badge variant="secondary" className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  <span>{game.platform}</span>
-              </Badge>
-              <Badge variant="outline">{game.genre}</Badge>
-          </div>
+        <CardHeader className="p-4">
+            <div className='flex items-start gap-4'>
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+                    <Image
+                        src={game.coverImage}
+                        alt={`${game.title} icon`}
+                        fill
+                        className="object-cover"
+                    />
+                </div>
+                <div>
+                    <CardTitle className="truncate text-base font-medium">{game.title}</CardTitle>
+                    <p className="text-xs text-muted-foreground">{game.genre}</p>
+                    <div className="mt-1 flex items-center gap-1">
+                        <span className="text-xs font-medium">{game.averageRating?.toFixed(1) || 'New'}</span>
+                        {game.averageRating !== undefined && <Star className="h-3 w-3 fill-current" />}
+                    </div>
+                </div>
+            </div>
         </CardHeader>
-        <CardContent className="flex-grow">
-          <p className="text-sm text-muted-foreground line-clamp-3">{game.description}</p>
+        <CardContent className="flex-grow p-4 pt-0">
+          <p className="text-xs text-muted-foreground line-clamp-2">{game.description}</p>
         </CardContent>
-        <CardFooter>
-          <div className="flex w-full items-center justify-end">
-            <Button onClick={handleInstallClick} disabled={!game.downloadUrl}>Install</Button>
-          </div>
-        </CardFooter>
+        <div className="p-4 pt-0">
+           <Button onClick={handleInstallClick} disabled={!game.downloadUrl} className="w-full">
+                <Download className="mr-2 h-4 w-4"/>
+                Install
+            </Button>
+        </div>
       </Card>
     </Link>
   );

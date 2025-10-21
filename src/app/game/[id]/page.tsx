@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
-import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +11,8 @@ import { Loader2, Star, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 
 interface PublishedGame {
   id: string;
@@ -42,10 +43,10 @@ function StarRating({ currentRating, onRate, disabled }: { currentRating: number
                 >
                     <Star
                         className={cn(
-                            'h-8 w-8 transition-colors',
+                            'h-6 w-6 transition-colors sm:h-8 sm:w-8',
                             (hoverRating || currentRating) >= star
-                                ? 'text-yellow-400 fill-yellow-400'
-                                : 'text-muted-foreground'
+                                ? 'text-primary fill-primary'
+                                : 'text-muted-foreground/50'
                         )}
                     />
                 </button>
@@ -70,6 +71,15 @@ function GameDetailPageComponent() {
   const { data: game, isLoading } = useDoc<PublishedGame>(gameDocRef);
 
   const userRating = game?.ratings.find(r => r.userId === user?.uid)?.rating || 0;
+  
+  const ratingDistribution = useMemo(() => {
+    if (!game) return [];
+    const dist = [0,0,0,0,0];
+    game.ratings.forEach(r => {
+        dist[r.rating - 1]++;
+    });
+    return dist.reverse();
+  }, [game]);
 
   const handleRateGame = async (rating: number) => {
     if (!user) {
@@ -82,30 +92,21 @@ function GameDetailPageComponent() {
 
     const existingRating = game.ratings.find(r => r.userId === user.uid);
 
-    // Optimistically update the UI
-    const newRatings = existingRating
-        ? game.ratings.map(r => r.userId === user.uid ? { userId: user.uid, rating } : r)
-        : [...game.ratings, { userId: user.uid, rating }];
+    let newRatings;
+    if(existingRating) {
+        newRatings = game.ratings.map(r => r.userId === user.uid ? { userId: user.uid, rating } : r)
+    } else {
+        newRatings = [...game.ratings, { userId: user.uid, rating }];
+    }
     
     const totalRating = newRatings.reduce((acc, r) => acc + r.rating, 0);
     const newAverageRating = totalRating / newRatings.length;
 
     try {
-        if(existingRating) {
-            // Remove the old rating, then add the new one
-            await updateDoc(gameDocRef, {
-                ratings: arrayRemove(existingRating)
-            });
-            await updateDoc(gameDocRef, {
-                ratings: arrayUnion({ userId: user.uid, rating }),
-                averageRating: newAverageRating
-            });
-        } else {
-            await updateDoc(gameDocRef, {
-                ratings: arrayUnion({ userId: user.uid, rating }),
-                averageRating: newAverageRating
-            });
-        }
+        await updateDoc(gameDocRef, {
+            ratings: newRatings,
+            averageRating: newAverageRating,
+        });
 
         toast({ title: "Rating submitted!", description: `You rated ${game.gameName} ${rating} stars.` });
 
@@ -120,6 +121,11 @@ function GameDetailPageComponent() {
   const handleInstallClick = () => {
     if (game?.downloadUrl) {
       window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
+      if (gameDocRef) {
+        updateDoc(gameDocRef, {
+            downloads: (game.downloads || 0) + 1
+        });
+      }
     }
   };
 
@@ -140,37 +146,83 @@ function GameDetailPageComponent() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl py-8">
-      <Card className="overflow-hidden">
-        <div className="grid md:grid-cols-2">
-            <div className="relative aspect-square">
-                <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
-            </div>
-            <div className="flex flex-col p-6">
-                <CardHeader className="p-0">
-                    <CardTitle className="text-3xl font-bold">{game.gameName}</CardTitle>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                        <span className="font-semibold">{game.averageRating.toFixed(2)}</span>
-                        <span>({game.ratings.length} ratings)</span>
-                    </div>
-                </CardHeader>
-                <CardContent className="flex-grow p-0 pt-4">
-                    <CardDescription>{game.description || 'No description available.'}</CardDescription>
-                </CardContent>
-                <div className="mt-6 space-y-4">
-                    <div>
-                        <h4 className="font-semibold">Rate this game</h4>
-                        <StarRating currentRating={userRating} onRate={handleRateGame} disabled={!user || isSubmittingRating}/>
-                    </div>
-                    <Button onClick={handleInstallClick} className="w-full" size="lg" disabled={!game.downloadUrl}>
-                        <Download className="mr-2 h-5 w-5"/>
-                        Install
-                    </Button>
+    <div className="container mx-auto max-w-5xl py-4 sm:py-8">
+      <div className="space-y-8">
+        <Card className="overflow-hidden border-0 shadow-none sm:border sm:shadow-sm">
+          <CardContent className="p-0 sm:p-6">
+            <div className="flex flex-col gap-6 sm:flex-row">
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl sm:h-32 sm:w-32">
+                    <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
+                </div>
+                <div className="flex flex-col justify-center space-y-2">
+                    <h1 className="text-2xl font-bold sm:text-4xl">{game.gameName}</h1>
+                    <p className="text-sm text-primary sm:text-base">Snapter Games</p>
+                    <p className="text-xs text-muted-foreground">Contains ads</p>
                 </div>
             </div>
+          </CardContent>
+        </Card>
+        
+        <div className='px-4 sm:px-0'>
+            <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl}>
+                <Download className="mr-2 h-5 w-5"/>
+                Install
+            </Button>
         </div>
-      </Card>
+        
+        <Separator />
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Ratings and reviews</CardTitle>
+                <CardDescription>Ratings and reviews are verified</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-8 md:grid-cols-2">
+                <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="text-5xl font-bold">{game.averageRating.toFixed(1)}</div>
+                    <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <Star key={star} className={cn('h-5 w-5', game.averageRating >= star ? 'text-primary fill-primary' : 'text-muted-foreground/30')} />
+                        ))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{game.ratings.length} reviews</div>
+                </div>
+
+                <div className="space-y-1">
+                    {ratingDistribution.map((count, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                            <span className="w-2 text-sm font-medium">{5 - i}</span>
+                            <Progress value={game.ratings.length > 0 ? (count / game.ratings.length) * 100 : 0} className="h-2" />
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Rate this game</CardTitle>
+                <CardDescription>Tell others what you think</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center space-y-4">
+                 <StarRating currentRating={userRating} onRate={handleRateGame} disabled={!user || isSubmittingRating}/>
+                 <p className="text-sm text-muted-foreground">
+                    {user ? (isSubmittingRating ? "Submitting..." : (userRating > 0 ? "You rated this game" : "Share your experience")) : "Log in to rate"}
+                 </p>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>About this game</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">{game.description || 'No description available.'}</p>
+            </CardContent>
+        </Card>
+
+      </div>
     </div>
   );
 }
