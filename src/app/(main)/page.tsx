@@ -12,7 +12,7 @@ import type { Game } from '@/lib/types';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { Frown, Loader2 } from 'lucide-react';
+import { Frown, Loader2, ServerCrash } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Autoplay from "embla-carousel-autoplay";
 import { searchGames } from '@/ai/flows/search-games';
@@ -54,6 +54,7 @@ function HomePageComponent() {
 
     const [isAiSearching, setIsAiSearching] = useState(false);
     const [aiSearchResults, setAiSearchResults] = useState<Game[]>([]);
+    const [aiSearchError, setAiSearchError] = useState<string | null>(null);
 
 
     const publishedGamesQuery = useMemoFirebase(() => {
@@ -88,18 +89,35 @@ function HomePageComponent() {
             if (searchQuery && allGames.length > 0) {
                 setIsAiSearching(true);
                 setAiSearchResults([]);
-                try {
-                    const gameSearchSpace = allGames.map(g => ({ id: g.id, title: g.title, description: g.description, genre: g.genre }));
-                    const result = await searchGames({ query: searchQuery, games: gameSearchSpace });
-                    const resultMap = new Map(allGames.map(g => [g.id, g]));
-                    const foundGames = result.gameIds.map(id => resultMap.get(id)).filter((g): g is Game => !!g);
-                    setAiSearchResults(foundGames);
-                } catch (error) {
-                    console.error("AI search failed:", error);
-                    setAiSearchResults([]);
-                } finally {
-                    setIsAiSearching(false);
+                setAiSearchError(null);
+
+                const maxRetries = 3;
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    try {
+                        const gameSearchSpace = allGames.map(g => ({ id: g.id, title: g.title, description: g.description, genre: g.genre }));
+                        const result = await searchGames({ query: searchQuery, games: gameSearchSpace });
+                        const resultMap = new Map(allGames.map(g => [g.id, g]));
+                        const foundGames = result.gameIds.map(id => resultMap.get(id)).filter((g): g is Game => !!g);
+                        setAiSearchResults(foundGames);
+                        setAiSearchError(null); // Clear error on success
+                        break; // Exit loop on success
+                    } catch (error: any) {
+                        console.error(`AI search attempt ${attempt} failed:`, error);
+                        if (attempt === maxRetries) {
+                            setAiSearchResults([]);
+                            // Check if the error message indicates a service availability issue
+                            if (error.message && (error.message.includes('503') || error.message.toLowerCase().includes('overloaded'))) {
+                                setAiSearchError("The AI service is currently overloaded. Please try again in a few moments.");
+                            } else {
+                                setAiSearchError("An unexpected error occurred during the AI search.");
+                            }
+                        } else {
+                            // Wait a bit before retrying
+                            await new Promise(res => setTimeout(res, 1000 * attempt));
+                        }
+                    }
                 }
+                setIsAiSearching(false);
             }
         };
 
@@ -129,6 +147,16 @@ function HomePageComponent() {
                     <div className="flex h-[40vh] flex-col items-center justify-center">
                         <Loader2 className="h-12 w-12 animate-spin text-primary" />
                         <p className="mt-4 text-muted-foreground">Searching with AI...</p>
+                    </div>
+                ) : aiSearchError ? (
+                     <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-destructive/50 bg-card p-12 text-center">
+                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+                        <ServerCrash className="h-8 w-8 text-destructive" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-destructive">Search Unavailable</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            {aiSearchError}
+                        </p>
                     </div>
                 ) : aiSearchResults.length > 0 ? (
                     aiSearchResults.map((game) => <GameCard key={game.id} game={game} />)
