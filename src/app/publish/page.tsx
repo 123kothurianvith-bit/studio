@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState } from 'react';
 import { useFirestore, useUser, FirebaseClientProvider } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -22,10 +22,10 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { addDocumentNonBlocking } from '@/firebase';
 
 const formSchema = z.object({
   gameName: z.string().min(2, { message: 'Game name must be at least 2 characters.' }),
+  developerName: z.string().min(2, { message: 'Developer name must be at least 2 characters.' }),
   iconUrl: z.string().url({ message: 'Please enter a valid URL for the game icon.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
 });
@@ -43,6 +43,7 @@ function PublishComponent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       gameName: '',
+      developerName: '',
       iconUrl: '',
       downloadUrl: '',
     },
@@ -60,30 +61,48 @@ function PublishComponent() {
     setIsSubmitting(true);
     
     try {
-      const gamesCollection = collection(firestore, 'publishedGames');
-      
-      const newGameData = {
-        ...values,
-        publisherId: user.uid,
-        downloads: 0,
-        averageRating: 0,
-        ratings: [],
-        createdAt: serverTimestamp(),
-      };
+      const developerRef = doc(firestore, 'developers', user.uid);
+      const gamesCollectionRef = collection(firestore, 'publishedGames');
 
-      await addDoc(gamesCollection, newGameData);
-      
+      await runTransaction(firestore, async (transaction) => {
+        const devDoc = await transaction.get(developerRef);
+
+        // 1. Create or update developer profile
+        if (!devDoc.exists()) {
+          transaction.set(developerRef, {
+            developerName: values.developerName,
+            gameCount: 1,
+          });
+        } else {
+          const newGameCount = (devDoc.data().gameCount || 0) + 1;
+          transaction.update(developerRef, { gameCount: newGameCount });
+        }
+
+        // 2. Add the new game document
+        const newGameRef = doc(gamesCollectionRef); // Create a new doc ref with a unique ID
+        transaction.set(newGameRef, {
+            ...values,
+            publisherId: user.uid,
+            downloads: 0,
+            averageRating: 0,
+            ratings: [],
+            createdAt: serverTimestamp(),
+        });
+      });
+
       toast({
         title: 'Game Published!',
         description: `${values.gameName} is now live!`,
       });
       router.push('/my-apps');
     } catch (error: any) {
+      console.error("Publishing Error: ", error);
       toast({
         title: 'Publishing Failed',
         description: error.message || 'An unexpected error occurred.',
         variant: 'destructive',
       });
+    } finally {
       setIsSubmitting(false);
     }
   }
@@ -112,6 +131,20 @@ function PublishComponent() {
                             <FormControl>
                             <Input placeholder="e.g., Super Mega Runner" {...field} />
                             </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="developerName"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Developer Name</FormLabel>
+                            <FormControl>
+                            <Input placeholder="e.g., Snapter Studios" {...field} />
+                            </FormControl>
+                            <FormDescription>This will be your public developer name.</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}

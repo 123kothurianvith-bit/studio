@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Image from 'next/image';
 import type { Game } from '@/lib/types';
@@ -30,6 +30,10 @@ export default function GameCard({ game }: GameCardProps) {
     }
   };
 
+  const handleDeveloperClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Link href={`/game/${game.id}`} className="group flex items-center justify-between gap-4 rounded-lg p-2 transition-colors hover:bg-accent">
       <div className="flex flex-1 items-center gap-4">
@@ -45,7 +49,13 @@ export default function GameCard({ game }: GameCardProps) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-foreground">{game.title}</p>
-          <p className="text-sm text-muted-foreground">{game.genre}</p>
+          {game.developerName && game.publisherId ? (
+            <Link href={`/developer/${game.publisherId}`} onClick={handleDeveloperClick} className="text-sm text-primary hover:underline">
+              {game.developerName}
+            </Link>
+          ) : (
+            <p className="text-sm text-muted-foreground">{game.genre}</p>
+          )}
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <span>{game.averageRating?.toFixed(1) ?? 'N/A'}</span>
             <Star className="h-3 w-3 fill-current" />

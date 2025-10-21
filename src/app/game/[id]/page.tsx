@@ -5,10 +5,11 @@ import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Star, Download } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -21,6 +22,7 @@ interface PublishedGame {
   downloadUrl: string;
   description: string;
   publisherId: string;
+  developerName: string;
   downloads: number;
   averageRating: number;
   ratings: { userId: string; rating: number }[];
@@ -156,7 +158,9 @@ function GameDetailPageComponent() {
                 </div>
                 <div className="flex flex-col justify-center space-y-2">
                     <h1 className="text-2xl font-bold sm:text-4xl">{game.gameName}</h1>
-                    <p className="text-sm text-primary sm:text-base">Snapter Games</p>
+                    <Link href={`/developer/${game.publisherId}`} className="text-sm text-primary hover:underline sm:text-base">
+                      {game.developerName}
+                    </Link>
                     <p className="text-xs text-muted-foreground">Contains ads</p>
                 </div>
             </div>

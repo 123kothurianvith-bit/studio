@@ -108,6 +108,10 @@
           "type": "string",
           "description": "The UID of the user who published the game."
         },
+        "developerName": {
+          "type": "string",
+          "description": "The public display name of the game developer."
+        },
         "gameName": {
           "type": "string",
           "description": "The name of the game."
@@ -148,9 +152,35 @@
       "required": [
         "id",
         "publisherId",
+        "developerName",
         "gameName",
         "iconUrl",
         "downloadUrl"
+      ]
+    },
+    "DeveloperProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DeveloperProfile",
+      "type": "object",
+      "description": "Public profile for a game developer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The developer's user ID (matches Firebase Auth UID)."
+        },
+        "developerName": {
+          "type": "string",
+          "description": "The public display name of the developer."
+        },
+        "gameCount": {
+          "type": "number",
+          "description": "The total number of games published by the developer."
+        }
+      },
+      "required": [
+        "id",
+        "developerName",
+        "gameCount"
       ]
     }
   },
@@ -228,8 +258,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/developers/{developerId}",
+        "definition": {
+          "entityName": "DeveloperProfile",
+          "schema": {
+            "$ref": "#/backend/entities/DeveloperProfile"
+          },
+          "description": "Stores public developer profiles. Read access is public, write access is restricted to the developer.",
+          "params": [
+            {
+              "name": "developerId",
+              "description": "The unique ID of the developer, matching their auth UID."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability, following the specified design principles. User accounts are stored in `/users/{userId}`, with wishlists as subcollections.  This structure avoids hierarchical authorization dependencies by relying solely on `request.auth.uid` and path-based ownership for user-specific data. Games are stored in a top-level `/games` collection. A new top-level collection `/publishedGames` is added for developer-published content, with publisher ownership enforced through security rules. Authorization Independence is achieved since there is no need for `get()` calls to check parent document data, as ownership is implied by the path for user-owned resources. The structure supports the required QAPs by segregating data based on access needs."
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability, following the specified design principles. User accounts are stored in `/users/{userId}`, with wishlists as subcollections.  This structure avoids hierarchical authorization dependencies by relying solely on `request.auth.uid` and path-based ownership for user-specific data. Games are stored in a top-level `/games` collection. A new top-level collection `/publishedGames` is added for developer-published content, with publisher ownership enforced through security rules. A `/developers` collection is added to store public developer profiles, linking them to their games and allowing for public profile pages. Authorization Independence is achieved since there is no need for `get()` calls to check parent document data, as ownership is implied by the path for user-owned resources. The structure supports the required QAPs by segregating data based on access needs."
   }
 }

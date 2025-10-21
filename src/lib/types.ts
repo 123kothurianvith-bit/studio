@@ -11,4 +11,6 @@ export type Game = {
   imageHint: ImagePlaceholder['imageHint'];
   downloadUrl?: string;
   averageRating?: number;
+  publisherId?: string;
+  developerName?: string;
 };

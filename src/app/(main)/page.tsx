@@ -31,6 +31,8 @@ interface PublishedGame {
   downloadUrl: string;
   description: string;
   averageRating: number;
+  publisherId: string;
+  developerName: string;
   [key: string]: any;
 }
 
@@ -60,7 +62,9 @@ function HomePageComponent() {
             coverImage: pg.iconUrl,
             imageHint: 'user game',
             downloadUrl: pg.downloadUrl,
-            averageRating: pg.averageRating
+            averageRating: pg.averageRating,
+            publisherId: pg.publisherId,
+            developerName: pg.developerName,
         }));
 
         return transformedGames;
