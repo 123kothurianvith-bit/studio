@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, LogOut, User as UserIcon, UserPlus } from 'lucide-react';
+import { Heart, LogOut, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -84,20 +84,12 @@ export default function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
               <Link href="/login">
                 <UserIcon className="mr-2 h-4 w-4" />
                 Login
               </Link>
             </Button>
-            <Button asChild>
-              <Link href="/signup">
-                 <UserPlus className="mr-2 h-4 w-4" />
-                Sign Up
-              </Link>
-            </Button>
-          </div>
         )}
       </div>
     </header>
