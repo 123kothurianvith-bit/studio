@@ -77,10 +77,12 @@ function GameDetailPageComponent() {
   const userRating = game?.ratings.find(r => r.userId === user?.uid)?.rating || 0;
   
   const ratingDistribution = useMemo(() => {
-    if (!game) return [];
+    if (!game || !game.ratings.length) return [0,0,0,0,0];
     const dist = [0,0,0,0,0];
     game.ratings.forEach(r => {
-        dist[r.rating - 1]++;
+        if(r.rating >= 1 && r.rating <= 5) {
+            dist[r.rating - 1]++;
+        }
     });
     return dist.reverse();
   }, [game]);
@@ -152,108 +154,100 @@ function GameDetailPageComponent() {
   }
 
   return (
-    <div className="container mx-auto max-w-5xl py-4 sm:py-8">
-      <div className="space-y-8">
-        <Card className="overflow-hidden border-0 shadow-none sm:border sm:shadow-sm">
-          <CardContent className="p-0 sm:p-6">
-            <div className="flex flex-col gap-6 sm:flex-row">
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl sm:h-32 sm:w-32">
-                    <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
-                </div>
-                <div className="flex flex-col justify-center space-y-2 px-4 sm:px-0">
-                    <h1 className="text-2xl font-bold sm:text-4xl">{game.gameName}</h1>
-                    <Link href={`/developer/${game.publisherId}`} className="text-sm text-primary hover:underline sm:text-base">
-                      {game.developerName}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">Contains ads</p>
-                </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <div className='flex items-center gap-4 px-4 sm:px-0'>
-            <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl}>
-                <Download className="mr-2 h-5 w-5"/>
-                Install
-            </Button>
-            {isPublisher && (
-              <Button asChild variant="outline" size="lg">
-                <Link href={`/game/${id}/edit`}>
-                  <Edit className="mr-2 h-5 w-5" />
-                  Edit
-                </Link>
-              </Button>
-            )}
+    <div className="container mx-auto max-w-5xl space-y-8 py-4 sm:py-8">
+      <header className="flex flex-col gap-6 sm:flex-row">
+        <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-3xl sm:h-40 sm:w-40">
+          <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
         </div>
-        
-        <Separator />
-        
-        {game.whatsNew && (
-            <>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>What's New</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="whitespace-pre-wrap text-sm text-muted-foreground">{game.whatsNew}</p>
-                    </CardContent>
-                </Card>
-                <Separator />
-            </>
+        <div className="flex flex-col justify-center space-y-3">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">{game.gameName}</h1>
+          <Link href={`/developer/${game.publisherId}`} className="text-lg text-primary hover:underline sm:text-xl">
+            {game.developerName}
+          </Link>
+          <p className="text-sm text-muted-foreground">Contains ads</p>
+        </div>
+      </header>
+
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+        <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl}>
+          <Download className="mr-2 h-5 w-5" />
+          Install
+        </Button>
+        {isPublisher && (
+          <Button asChild variant="outline" className="w-full sm:w-auto" size="lg">
+            <Link href={`/game/${id}/edit`}>
+              <Edit className="mr-2 h-5 w-5" />
+              Edit
+            </Link>
+          </Button>
         )}
+      </div>
 
+      <Separator />
 
-        <Card>
+      {game.whatsNew && (
+        <>
+          <Card>
             <CardHeader>
-                <CardTitle>Ratings and reviews</CardTitle>
-                <CardDescription>Ratings and reviews are verified</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-8 md:grid-cols-2">
-                <div className="flex flex-col items-center justify-center space-y-2">
-                    <div className="text-5xl font-bold">{game.averageRating.toFixed(1)}</div>
-                    <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <Star key={star} className={cn('h-5 w-5', game.averageRating >= star ? 'text-primary fill-primary' : 'text-muted-foreground/30')} />
-                        ))}
-                    </div>
-                    <div className="text-sm text-muted-foreground">{game.ratings.length} reviews</div>
-                </div>
-
-                <div className="space-y-1">
-                    {ratingDistribution.map((count, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                            <span className="w-2 text-sm font-medium">{5 - i}</span>
-                            <Progress value={game.ratings.length > 0 ? (count / game.ratings.length) * 100 : 0} className="h-2" />
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Rate this game</CardTitle>
-                <CardDescription>Tell others what you think</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center space-y-4">
-                 <StarRating currentRating={userRating} onRate={handleRateGame} disabled={!user || isSubmittingRating}/>
-                 <p className="text-sm text-muted-foreground">
-                    {user ? (isSubmittingRating ? "Submitting..." : (userRating > 0 ? "You rated this game" : "Share your experience")) : "Log in to rate"}
-                 </p>
-            </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>About this game</CardTitle>
+              <CardTitle>What's New</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{game.description || 'No description available.'}</p>
+              <p className="whitespace-pre-wrap text-muted-foreground">{game.whatsNew}</p>
             </CardContent>
-        </Card>
+          </Card>
+          <Separator />
+        </>
+      )}
 
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Ratings and reviews</CardTitle>
+          <CardDescription>Ratings and reviews are verified and are from people who use the same type of device that you use.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-8 md:grid-cols-2">
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <div className="text-6xl font-bold">{game.averageRating.toFixed(1)}</div>
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} className={cn('h-6 w-6', game.averageRating >= star ? 'text-primary fill-primary' : 'text-muted-foreground/30')} />
+              ))}
+            </div>
+            <div className="text-muted-foreground">{game.ratings.length.toLocaleString()} reviews</div>
+          </div>
+
+          <div className="w-full space-y-2">
+            {ratingDistribution.map((count, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-3 text-sm font-medium">{5 - i}</span>
+                <Progress value={game.ratings.length > 0 ? (count / game.ratings.length) * 100 : 0} className="h-2 flex-1" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Rate this game</CardTitle>
+          <CardDescription>Tell others what you think</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center space-y-4">
+          <StarRating currentRating={userRating} onRate={handleRateGame} disabled={!user || isSubmittingRating} />
+          <p className="text-sm text-muted-foreground">
+            {user ? (isSubmittingRating ? "Submitting..." : (userRating > 0 ? "You rated this game" : "Share your experience")) : "Log in to rate"}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>About this game</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="whitespace-pre-wrap text-muted-foreground">{game.description || 'No description available.'}</p>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
@@ -265,5 +259,3 @@ export default function GameDetailPage() {
         </FirebaseClientProvider>
     );
 }
-
-    

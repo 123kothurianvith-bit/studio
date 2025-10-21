@@ -19,7 +19,7 @@ export default function GameBrowser({ allGames }: GameBrowserProps) {
 
     return allGames.filter((game) => {
       const matchesSearch = game.title.toLowerCase().includes(searchTerm);
-      const matchesGenre = !genre || game.genre === genre;
+      const matchesGenre = !genre || genre === 'all' || game.genre === genre;
       
       return matchesSearch && matchesGenre;
     });
@@ -40,7 +40,7 @@ export default function GameBrowser({ allGames }: GameBrowserProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {filteredGames.map((game) => (
         <GameCard key={game.id} game={game} />
       ))}

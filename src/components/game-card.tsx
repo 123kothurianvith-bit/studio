@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
 
 type GameCardProps = {
   game: Game;
@@ -23,7 +24,7 @@ export default function GameCard({ game }: GameCardProps) {
 
     if (game?.downloadUrl) {
       window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
-      if (firestore && game.id && game.publisherId) { // Ensure game.id is valid
+      if (firestore && game.id && game.publisherId) {
          const gameDocRef = doc(firestore, 'publishedGames', game.id);
          updateDoc(gameDocRef, {
             downloads: (game.downloads || 0) + 1
@@ -32,32 +33,25 @@ export default function GameCard({ game }: GameCardProps) {
     }
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    let target = e.target as HTMLElement;
-    while (target && target !== e.currentTarget) {
-      if (target.tagName === 'A' || target.closest('button')) {
-        return; // Exit if the click was on a link or button inside the card
-      }
-      target = target.parentElement as HTMLElement;
-    }
+  const handleCardClick = () => {
     router.push(`/game/${game.id}`);
   };
 
   return (
-    <div onClick={handleCardClick} className="group flex cursor-pointer items-center justify-between gap-4 rounded-lg p-2 transition-colors hover:bg-accent">
-      <div className="flex flex-1 items-center gap-4">
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+    <Card onClick={handleCardClick} className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg">
+      <CardContent className="p-0">
+        <div className="relative aspect-[3/4] w-full">
           <Image
             src={game.coverImage}
             alt={game.title}
             fill
-            sizes="64px"
-            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform group-hover:scale-105"
             data-ai-hint={game.imageHint}
           />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-foreground">{game.title}</p>
+        <div className="p-4">
+          <h3 className="truncate font-medium text-foreground">{game.title}</h3>
           {game.developerName && game.publisherId ? (
             <Link 
               href={`/developer/${game.publisherId}`}
@@ -69,18 +63,12 @@ export default function GameCard({ game }: GameCardProps) {
           ) : (
             <p className="text-sm text-muted-foreground">{game.genre}</p>
           )}
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <span>{game.averageRating?.toFixed(1) ?? 'N/A'}</span>
-            <Star className="h-3 w-3 fill-current" />
+          <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+            <span>{game.averageRating?.toFixed(1) ?? 'New'}</span>
+            {game.averageRating ? <Star className="h-4 w-4 fill-current text-primary" /> : null}
           </div>
         </div>
-      </div>
-      {game.downloadUrl && (
-        <Button variant="outline" size="sm" onClick={handleInstallClick}>
-            <Download className="mr-2 h-4 w-4" />
-            Install
-        </Button>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
