@@ -38,6 +38,7 @@ import {
 } from './ui/select';
 import { Slider } from './ui/slider';
 import { useDebouncedCallback } from 'use-debounce';
+import { useUser } from '@/firebase';
 
 type ClientSidebarProps = {
   platforms: string[];
@@ -53,6 +54,9 @@ export default function ClientSidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useUser();
+  const userRole = user?.profile?.role;
+
 
   const handleFilterChange = (key: string, value: string | null) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
@@ -118,36 +122,42 @@ export default function ClientSidebar({
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-        <SidebarSeparator />
-         <SidebarGroup>
-           <SidebarGroupLabel>Developer</SidebarGroupLabel>
-           <SidebarMenu>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/publish'}>
-                  <Link href="/publish">
-                    <Upload />
-                    <span>Publish Game</span>
-                  </Link>
-                </SidebarMenuButton>
-             </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/my-apps'}>
-                  <Link href="/my-apps">
-                    <Gamepad />
-                    <span>My Apps</span>
-                  </Link>
-                </SidebarMenuButton>
-             </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/analytics'}>
-                  <Link href="/analytics">
-                    <BarChart2 />
-                    <span>Analytics</span>
-                  </Link>
-                </SidebarMenuButton>
-             </SidebarMenuItem>
-           </SidebarMenu>
-        </SidebarGroup>
+        
+        {userRole === 'developer' && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Developer</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === '/publish'}>
+                      <Link href="/publish">
+                        <Upload />
+                        <span>Publish Game</span>
+                      </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === '/my-apps'}>
+                      <Link href="/my-apps">
+                        <Gamepad />
+                        <span>My Apps</span>
+                      </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === '/analytics'}>
+                      <Link href="/analytics">
+                        <BarChart2 />
+                        <span>Analytics</span>
+                      </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          </>
+        )}
+
         <SidebarSeparator />
         <SidebarGroup>
           <SidebarGroupLabel>Filters</SidebarGroupLabel>

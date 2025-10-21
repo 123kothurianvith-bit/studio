@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { BarChart2, Gamepad, Loader2, Frown, Users, Star } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useRouter } from 'next/navigation';
 
 interface PublishedGame {
   id: string;
@@ -18,8 +19,15 @@ interface PublishedGame {
 
 function AnalyticsComponent() {
   const firestore = useFirestore();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && user?.profile?.role !== 'developer') {
+        router.replace('/');
+    }
+  }, [user, isUserLoading, router]);
 
   const publishedGamesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -49,13 +57,27 @@ function AnalyticsComponent() {
     }));
   }, [games, selectedGameId]);
 
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  if (user?.profile?.role !== 'developer') {
+     return (
+       <div className="flex h-[80vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
+         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+           <Frown className="h-8 w-8 text-primary" />
+         </div>
+         <h3 className="text-xl font-semibold text-foreground">Access Denied</h3>
+         <p className="mt-2 text-sm text-muted-foreground">
+           You must be a developer to view analytics.
+         </p>
+       </div>
+     );
+   }
 
   if (!games || games.length === 0) {
     return (

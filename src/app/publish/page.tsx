@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFirestore, useUser, FirebaseClientProvider, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, Frown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const formSchema = z.object({
@@ -36,8 +36,14 @@ function PublishComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && user?.profile?.role !== 'developer') {
+        router.replace('/');
+    }
+  }, [user, isUserLoading, router]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -110,6 +116,28 @@ function PublishComponent() {
       }).finally(() => {
         setIsSubmitting(false);
       });
+  }
+
+  if (isUserLoading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+   if (user?.profile?.role !== 'developer') {
+    return (
+      <div className="flex h-[80vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <Frown className="h-8 w-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-semibold text-foreground">Access Denied</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          You must be a developer to publish games.
+        </p>
+      </div>
+    );
   }
   
   return (

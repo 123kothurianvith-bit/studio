@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Upload, Gamepad, BarChart2, User as UserIcon, LogOut, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useAuth } from '@/firebase';
@@ -15,23 +15,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
 
 
-const navItems = [
-  { href: '/', icon: Home, label: 'Browse' },
-  { href: '/publish', icon: Upload, label: 'Publish' },
-  { href: '/my-apps', icon: Gamepad, label: 'My Apps' },
-  { href: '/analytics', icon: BarChart2, label: 'Analytics' },
+const allNavItems = [
+  { href: '/', icon: Home, label: 'Browse', roles: ['user', 'developer'] },
+  { href: '/publish', icon: Upload, label: 'Publish', roles: ['developer'] },
+  { href: '/my-apps', icon: Gamepad, label: 'My Apps', roles: ['developer'] },
+  { href: '/analytics', icon: BarChart2, label: 'Analytics', roles: ['developer'] },
 ];
 
 export default function BottomNavBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  
+  const userRole = user?.profile?.role || 'user';
+
+  const navItems = allNavItems.filter(item => item.roles.includes(userRole));
+
 
   const handleSignOut = async () => {
     if (auth) {
       await auth.signOut();
+      router.push('/');
     }
   };
 
@@ -61,7 +69,7 @@ export default function BottomNavBar() {
              <Avatar className="h-6 w-6">
                <AvatarFallback>?</AvatarFallback>
              </Avatar>
-            <span className="text-xs">Account</span>
+            <span className="text-xs whitespace-nowrap">Account</span>
            </div>
         ) : user ? (
           <DropdownMenu>

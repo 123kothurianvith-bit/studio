@@ -22,10 +22,12 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  role: z.enum(['user', 'developer']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -42,6 +44,7 @@ function SignUpComponent() {
     defaultValues: {
       email: "",
       password: "",
+      role: "user",
     },
   });
 
@@ -55,7 +58,7 @@ function SignUpComponent() {
     if (!auth) return;
     setIsSubmitting(true);
     try {
-        initiateEmailSignUp(auth, values.email, values.password);
+        initiateEmailSignUp(auth, values.email, values.password, { role: values.role });
         toast({
             title: "Account Created",
             description: "You have been successfully signed up.",
@@ -112,6 +115,40 @@ function SignUpComponent() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Account Type</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="user" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Normal User
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="developer" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Developer
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

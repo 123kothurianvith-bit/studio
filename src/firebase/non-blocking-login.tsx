@@ -4,8 +4,10 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
+import { setDoc, doc } from 'firebase/firestore';
+import { getSdks } from './index';
+import { initializeFirebase } from '.';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -15,10 +17,32 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
-  createUserWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+export function initiateEmailSignUp(
+  authInstance: Auth,
+  email: string,
+  password: string,
+  profileData: { role: 'user' | 'developer' }
+): void {
+  // CRITICAL: Do NOT 'await' the promise.
+  createUserWithEmailAndPassword(authInstance, email, password)
+    .then(userCredential => {
+      // User created in Auth, now create their profile in Firestore.
+      const user = userCredential.user;
+      const { firestore } = getSdks(authInstance.app);
+      const userDocRef = doc(firestore, 'users', user.uid);
+      
+      // Set the user's profile data, including their role.
+      // This is also non-blocking.
+      setDoc(userDocRef, {
+        email: user.email,
+        role: profileData.role,
+      }, { merge: true });
+
+    })
+    .catch(error => {
+      // Errors from either createUser or setDoc will be caught here.
+      console.error("Error during sign-up process:", error);
+    });
 }
 
 /** Initiate email/password sign-in (non-blocking). */
