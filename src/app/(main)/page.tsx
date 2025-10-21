@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useMemo, useRef } from 'react';
 import GameCard from '@/components/game-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import GameSearch from '@/components/game-search';
@@ -14,6 +14,7 @@ import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { Frown } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import Autoplay from "embla-carousel-autoplay"
 
 
 function GameBrowserLoader() {
@@ -48,6 +49,8 @@ function HomePageComponent() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('q');
+    const plugin = useRef(Autoplay({ delay: 2000, stopOnInteraction: true }))
+
 
     const publishedGamesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -97,7 +100,13 @@ function HomePageComponent() {
       {featuredGames.length > 0 && !searchQuery && (
           <div className="space-y-4">
               <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
-              <Carousel opts={{ loop: true }} className="w-full">
+              <Carousel 
+                  opts={{ loop: true }}
+                  plugins={[plugin.current]}
+                  onMouseEnter={plugin.current.stop}
+                  onMouseLeave={plugin.current.reset}
+                  className="w-full"
+              >
                   <CarouselContent className="-ml-2">
                       {featuredGames.map((game, index) => (
                           <CarouselItem key={game.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
