@@ -49,25 +49,25 @@ export default function GameSearch() {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Link href="/" className="flex items-center gap-2">
+        <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-xl font-bold text-transparent">
+          Snapter Games
+        </span>
+      </Link>
+      <div className="relative ml-auto flex-1 md:grow-0">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search games..."
-          className="w-full rounded-full bg-muted pl-9"
+          type="search"
+          placeholder="Search..."
+          className="w-full rounded-lg bg-muted pl-8 md:w-[200px] lg:w-[336px]"
           defaultValue={searchParams.get('q') || ''}
           onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
-      <Button asChild variant="ghost" size="icon">
-        <Link href="/wishlist">
-          <Heart />
-          <span className="sr-only">Wishlist</span>
-        </Link>
-      </Button>
       {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
                       <AvatarImage src={user.photoURL || undefined} alt="User avatar" />
                       <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
@@ -100,7 +100,7 @@ export default function GameSearch() {
             </DropdownMenuContent>
           </DropdownMenu>
       ) : (
-        <Button asChild variant="ghost" size="icon">
+        <Button asChild variant="ghost" size="icon" className="rounded-full">
           <Link href="/login">
             <User />
              <span className="sr-only">Login</span>
