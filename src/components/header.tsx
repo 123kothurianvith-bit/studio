@@ -4,7 +4,6 @@ import { Heart } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { SidebarTrigger } from './ui/sidebar';
 import { useWishlist } from '@/contexts/wishlist-context';
 
 export default function Header() {
@@ -13,8 +12,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="md:hidden" />
-        <h1 className="hidden text-xl font-bold text-foreground md:block">
+        <h1 className="text-xl font-bold text-foreground">
           Snapter Games
         </h1>
       </div>
