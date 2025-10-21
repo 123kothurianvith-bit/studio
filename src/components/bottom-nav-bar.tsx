@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Upload, Gamepad, BarChart2, User as UserIcon, LogOut } from 'lucide-react';
+import { Upload, Gamepad, BarChart2, User as UserIcon, LogOut, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useAuth } from '@/firebase';
 import {
@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 
 const navItems = [
+  { href: '/', icon: Home, label: 'Browse' },
   { href: '/publish', icon: Upload, label: 'Publish' },
   { href: '/my-apps', icon: Gamepad, label: 'My Apps' },
   { href: '/analytics', icon: BarChart2, label: 'Analytics' },
@@ -106,3 +107,4 @@ export default function BottomNavBar() {
     </nav>
   );
 }
+
