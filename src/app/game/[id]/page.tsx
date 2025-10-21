@@ -156,7 +156,7 @@ function GameDetailPageComponent() {
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl sm:h-32 sm:w-32">
                     <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
                 </div>
-                <div className="flex flex-col justify-center space-y-2">
+                <div className="flex flex-col justify-center space-y-2 px-4 sm:px-0">
                     <h1 className="text-2xl font-bold sm:text-4xl">{game.gameName}</h1>
                     <Link href={`/developer/${game.publisherId}`} className="text-sm text-primary hover:underline sm:text-base">
                       {game.developerName}
@@ -222,7 +222,7 @@ function GameDetailPageComponent() {
                 <CardTitle>About this game</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-sm text-muted-foreground">{game.description || 'No description available.'}</p>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{game.description || 'No description available.'}</p>
             </CardContent>
         </Card>
 

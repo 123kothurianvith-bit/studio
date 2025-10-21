@@ -33,27 +33,20 @@ export default function GameCard({ game }: GameCardProps) {
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // a small hack to check if the click target or its parent is the developer link
     let target = e.target as HTMLElement;
-    while(target && target !== e.currentTarget) {
-        if(target.hasAttribute('data-developer-link')) {
-            return; // Exit if the click was on the developer link
-        }
-        target = target.parentElement as HTMLElement;
+    while (target && target !== e.currentTarget) {
+      if (target.tagName === 'A' || target.closest('button')) {
+        return; // Exit if the click was on a link or button inside the card
+      }
+      target = target.parentElement as HTMLElement;
     }
     router.push(`/game/${game.id}`);
   };
 
-  const handleDeveloperClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click handler from firing
-    router.push(`/developer/${game.publisherId}`);
-  };
-
-
   return (
     <div onClick={handleCardClick} className="group flex cursor-pointer items-center justify-between gap-4 rounded-lg p-2 transition-colors hover:bg-accent">
       <div className="flex flex-1 items-center gap-4">
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
           <Image
             src={game.coverImage}
             alt={game.title}
@@ -66,13 +59,13 @@ export default function GameCard({ game }: GameCardProps) {
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-foreground">{game.title}</p>
           {game.developerName && game.publisherId ? (
-            <div 
-              data-developer-link 
-              onClick={handleDeveloperClick} 
+            <Link 
+              href={`/developer/${game.publisherId}`}
               className="text-sm text-primary hover:underline w-fit"
+              onClick={(e) => e.stopPropagation()}
             >
               {game.developerName}
-            </div>
+            </Link>
           ) : (
             <p className="text-sm text-muted-foreground">{game.genre}</p>
           )}
