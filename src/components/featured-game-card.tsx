@@ -9,6 +9,21 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from './ui/card';
 import Image from 'next/image';
 import { Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+
+const gradients = [
+    'from-pink-500/70 via-purple-500/50 to-transparent',
+    'from-emerald-500/70 via-cyan-500/50 to-transparent',
+    'from-amber-500/70 via-orange-500/50 to-transparent',
+    'from-rose-400/70 via-fuchsia-500/50 to-transparent',
+    'from-indigo-500/70 via-sky-500/50 to-transparent',
+];
+
+const getGradientForCard = (title: string) => {
+    const charCodeSum = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return gradients[charCodeSum % gradients.length];
+};
 
 type FeaturedGameCardProps = {
   game: Game;
@@ -32,6 +47,8 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
   const handleCardClick = () => {
     router.push(`/game/${game.id}`);
   };
+  
+  const cardGradient = getGradientForCard(game.title);
 
   return (
     <Card
@@ -50,9 +67,9 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
         ) : (
             <div className="h-full w-full bg-muted"></div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/0 to-background/0" />
+        <div className={cn("absolute inset-0 bg-gradient-to-t", cardGradient)} />
         <div className="absolute bottom-0 left-0 right-0 p-4">
-           <h3 className="text-lg font-bold text-foreground drop-shadow-md">
+           <h3 className="text-lg font-bold text-white drop-shadow-md">
                 {game.featuredDescription}
             </h3>
         </div>
@@ -63,9 +80,9 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
                  <Image
                     src={game.iconUrl}
                     alt={`${game.title} icon`}
-                    fill
+                    width={64}
+                    height={64}
                     className="object-cover"
-                    sizes="64px"
                 />
             </div>
         )}
