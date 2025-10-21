@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import GameBrowser from '@/components/game-browser';
 import { games } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
+import GameSearch from '@/components/game-search';
 
 function GameBrowserLoader() {
   return (
@@ -20,8 +21,11 @@ function GameBrowserLoader() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<GameBrowserLoader />}>
-      <GameBrowser allGames={games} />
-    </Suspense>
+    <div className="space-y-6">
+      <GameSearch />
+      <Suspense fallback={<GameBrowserLoader />}>
+        <GameBrowser allGames={games} />
+      </Suspense>
+    </div>
   );
 }

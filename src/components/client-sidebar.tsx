@@ -66,10 +66,6 @@ export default function ClientSidebar({
     router.push(`${pathname}${query}`);
   };
 
-  const handleSearch = useDebouncedCallback((term: string) => {
-    handleFilterChange('q', term);
-  }, 300);
-
   const handlePriceChange = (newPrice: number[]) => {
     handleFilterChange('price', String(newPrice[0]));
   };
@@ -123,16 +119,6 @@ export default function ClientSidebar({
         <SidebarGroup>
           <SidebarGroupLabel>Filters</SidebarGroupLabel>
           <div className="space-y-6 px-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search games..."
-                className="pl-9"
-                defaultValue={searchParams.get('q') || ''}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="platform-filter">Platform</Label>
               <Select
