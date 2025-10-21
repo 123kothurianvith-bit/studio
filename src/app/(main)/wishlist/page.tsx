@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useWishlist } from '@/contexts/wishlist-context';
@@ -41,7 +42,6 @@ export default function WishlistPage() {
         averageRating: game.averageRating,
         publisherId: game.publisherId,
         developerName: game.developerName,
-        featuredImageUrl: game.featuredImageUrl,
     }));
   }, [wishlistedGamesData]);
 

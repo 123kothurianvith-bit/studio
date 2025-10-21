@@ -41,7 +41,6 @@ const formSchema = z.object({
   iconUrl: z.string().url().optional(),
   isFeatured: z.boolean().optional(),
   featuredDescription: z.string().optional(),
-  featuredImageUrl: z.string().url().optional(),
   // AI fields
   genre: z.enum(['Action', 'RPG', 'Strategy', 'Adventure', 'Sports']),
   keyFeatures: z.string().min(10, { message: "Please list at least one key feature." }),
@@ -56,14 +55,6 @@ const formSchema = z.object({
 }, {
     message: "Featured description must be at least 10 characters long when game is featured.",
     path: ["featuredDescription"],
-}).refine(data => {
-    if (data.isFeatured && (!data.featuredImageUrl)) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Featured background image URL is required when game is featured.",
-    path: ["featuredImageUrl"],
 }).refine(data => {
     if (data.isFeatured && (!data.iconUrl)) {
         return false;
@@ -94,7 +85,6 @@ function PublishComponent() {
       iconUrl: '',
       isFeatured: false,
       featuredDescription: '',
-      featuredImageUrl: '',
       keyFeatures: "",
       targetAudience: "",
       description: "",
@@ -321,20 +311,6 @@ function PublishComponent() {
                                 <Textarea placeholder="Enter a short, catchy description for the featured games section..." {...field} />
                                 </FormControl>
                                 <FormDescription>This description will be shown on the featured game card on the homepage.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="featuredImageUrl"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Featured Background Image URL</FormLabel>
-                                <FormControl>
-                                <Input placeholder="https://example.com/background.png" {...field} />
-                                </FormControl>
-                                <FormDescription>The background image for the large featured card.</FormDescription>
                                 <FormMessage />
                             </FormItem>
                             )}

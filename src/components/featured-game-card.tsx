@@ -13,11 +13,13 @@ import { cn } from '@/lib/utils';
 
 
 const gradients = [
-    'from-pink-500/70 via-purple-500/50 to-transparent',
-    'from-emerald-500/70 via-cyan-500/50 to-transparent',
-    'from-amber-500/70 via-orange-500/50 to-transparent',
-    'from-rose-400/70 via-fuchsia-500/50 to-transparent',
-    'from-indigo-500/70 via-sky-500/50 to-transparent',
+    'from-pink-500 to-purple-600',
+    'from-emerald-400 to-cyan-600',
+    'from-amber-400 to-orange-600',
+    'from-rose-400 to-fuchsia-600',
+    'from-indigo-500 to-sky-600',
+    'from-red-500 to-yellow-500',
+    'from-green-400 to-blue-500',
 ];
 
 const getGradientForCard = (title: string) => {
@@ -55,21 +57,9 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
       onClick={handleCardClick}
       className="group w-full cursor-pointer overflow-hidden rounded-2xl border-0 shadow-lg transition-all"
     >
-      <div className="relative aspect-[16/9] w-full">
-        {game.featuredImageUrl ? (
-            <Image
-                src={game.featuredImageUrl}
-                alt={`${game.title} background`}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-        ) : (
-            <div className="h-full w-full bg-muted"></div>
-        )}
-        <div className={cn("absolute inset-0 bg-gradient-to-t", cardGradient)} />
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-           <h3 className="text-lg font-bold text-white drop-shadow-md">
+      <div className={cn("relative aspect-[16/9] w-full bg-gradient-to-br", cardGradient)}>
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+           <h3 className="text-center text-xl font-bold text-white drop-shadow-md">
                 {game.featuredDescription}
             </h3>
         </div>

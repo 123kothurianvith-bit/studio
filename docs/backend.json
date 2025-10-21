@@ -174,10 +174,6 @@
           "type": "string",
           "description": "A short description used when the game is featured."
         },
-        "featuredImageUrl": {
-          "type": "string",
-          "description": "URL for the featured game's background image."
-        },
         "iconUrl": {
           "type": "string",
           "description": "URL for the game's icon."
