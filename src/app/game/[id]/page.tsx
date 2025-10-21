@@ -156,9 +156,6 @@ function GameDetailPageComponent() {
   return (
     <div className="container mx-auto max-w-5xl space-y-8 py-4 sm:py-8">
       <header className="flex flex-col gap-6 sm:flex-row">
-        <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-[28px] shadow-lg sm:h-40 sm:w-40">
-          <Image src={game.iconUrl} alt={game.gameName} width={160} height={160} className="object-cover" />
-        </div>
         <div className="flex flex-col justify-center space-y-3">
           <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">{game.gameName}</h1>
           <Link href={`/developer/${game.publisherId}`} className="text-lg text-primary hover:underline sm:text-xl">

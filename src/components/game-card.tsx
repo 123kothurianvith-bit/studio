@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import type { Game } from '@/lib/types';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
@@ -39,16 +38,6 @@ export default function GameCard({ game }: GameCardProps) {
 
   return (
     <div onClick={handleCardClick} className="group flex w-full cursor-pointer items-center gap-4 transition-colors hover:bg-accent/50 rounded-lg p-2">
-        <div className="relative aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
-          <Image
-            src={game.coverImage}
-            alt={game.title}
-            width={64}
-            height={64}
-            className="object-cover"
-            data-ai-hint={game.imageHint}
-          />
-        </div>
         <div className="flex-1">
           <h3 className="truncate font-medium text-foreground">{game.title}</h3>
             {game.developerName && game.publisherId ? (

@@ -6,7 +6,6 @@ import { useUser, useFirestore, useMemoFirebase, FirebaseClientProvider } from '
 import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Gamepad, Loader2, Frown } from 'lucide-react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -93,9 +92,6 @@ function MyAppsComponent() {
           <Card key={game.id} className="overflow-hidden">
              <Link href={`/game/${game.id}`}>
               <CardContent className="p-4 flex items-center gap-4">
-                  <div className="relative aspect-square w-16 h-16 shrink-0 overflow-hidden rounded-2xl">
-                      <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
-                  </div>
                   <div className='flex-1'>
                     <CardTitle className="truncate text-lg">{game.gameName}</CardTitle>
                     <div className="mt-1 flex justify-between text-sm text-muted-foreground">

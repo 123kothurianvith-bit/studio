@@ -1,7 +1,6 @@
 
 'use client';
 
-import Image from 'next/image';
 import type { Game } from '@/lib/types';
 import { Button } from './ui/button';
 import { Download } from 'lucide-react';
@@ -39,15 +38,6 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
       className="group w-full cursor-pointer overflow-hidden transition-all hover:bg-accent"
     >
       <CardContent className="flex items-center gap-4 p-4">
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
-          <Image
-            src={game.coverImage}
-            alt={game.title}
-            width={64}
-            height={64}
-            className="object-cover"
-          />
-        </div>
         <div className="flex-1 space-y-1">
           <h3 className="font-semibold text-foreground">{game.title}</h3>
           <p className="line-clamp-2 text-sm text-muted-foreground">
