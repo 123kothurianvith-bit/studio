@@ -6,12 +6,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import GameSearch from '@/components/game-search';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import type { Game } from '@/lib/types';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { Frown } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 
 function GameBrowserLoader() {
@@ -47,20 +48,23 @@ interface PublishedGame {
 
 function HomePageComponent() {
     const firestore = useFirestore();
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get('q');
 
     const publishedGamesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        // The query will fetch all games, filtering will happen client-side
         return collection(firestore, 'publishedGames');
     }, [firestore]);
 
-    const { data: publishedGames } = useCollection<PublishedGame>(publishedGamesQuery);
+    const { data: publishedGames, isLoading } = useCollection<PublishedGame>(publishedGamesQuery);
 
     const { featuredGames, regularGames } = useMemo(() => {
         if (!publishedGames) {
             return { featuredGames: [], regularGames: [] };
         }
 
-        const allGames: Game[] = publishedGames.map(pg => ({
+        let allGames: Game[] = publishedGames.map(pg => ({
             id: pg.id,
             title: pg.gameName,
             platform: 'Android', 
@@ -76,17 +80,21 @@ function HomePageComponent() {
             featuredImageUrl: pg.featuredImageUrl,
         }));
         
+        if (searchQuery) {
+            allGames = allGames.filter(game => game.title.toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+        
         const featured = allGames.filter(g => g.featuredImageUrl);
         const regular = allGames.filter(g => !g.featuredImageUrl);
 
         return { featuredGames: featured, regularGames: regular };
-    }, [publishedGames]);
+    }, [publishedGames, searchQuery]);
 
   return (
     <div className="space-y-8 pb-8">
       <GameSearch />
 
-      {featuredGames.length > 0 && (
+      {featuredGames.length > 0 && !searchQuery && (
           <div className="space-y-4">
               <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
               <Carousel opts={{ loop: true }} className="w-full">
@@ -104,7 +112,9 @@ function HomePageComponent() {
       <div className="space-y-4">
         <h2 className="px-4 text-2xl font-bold tracking-tight">All Games</h2>
         <div className="flex flex-col gap-4 px-4">
-          {regularGames.length > 0 ? (
+          {isLoading ? (
+             <GameBrowserLoader />
+          ) : regularGames.length > 0 ? (
             regularGames.map((game) => <GameCard key={game.id} game={game} />)
           ) : (
              <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
@@ -126,8 +136,10 @@ function HomePageComponent() {
 
 export default function HomePage() {
   return (
-    <FirebaseClientProvider>
-      <HomePageComponent />
-    </FirebaseClientProvider>
+    <Suspense fallback={<div>Loading...</div>}>
+      <FirebaseClientProvider>
+        <HomePageComponent />
+      </FirebaseClientProvider>
+    </Suspense>
   )
 }
