@@ -5,8 +5,9 @@ import type { Game } from '@/lib/types';
 import Link from 'next/link';
 import { Star, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 type GameCardProps = {
   game: Game;
@@ -14,6 +15,7 @@ type GameCardProps = {
 
 export default function GameCard({ game }: GameCardProps) {
   const firestore = useFirestore();
+  const router = useRouter();
 
   const handleInstallClick = (e: React.MouseEvent) => {
     e.preventDefault(); 
@@ -21,7 +23,7 @@ export default function GameCard({ game }: GameCardProps) {
 
     if (game?.downloadUrl) {
       window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
-      if (firestore && game.id) {
+      if (firestore && game.id && game.publisherId) { // Ensure game.id is valid
          const gameDocRef = doc(firestore, 'publishedGames', game.id);
          updateDoc(gameDocRef, {
             downloads: (game.downloads || 0) + 1
@@ -30,12 +32,26 @@ export default function GameCard({ game }: GameCardProps) {
     }
   };
 
-  const handleDeveloperClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCardClick = (e: React.MouseEvent) => {
+    // a small hack to check if the click target or its parent is the developer link
+    let target = e.target as HTMLElement;
+    while(target && target !== e.currentTarget) {
+        if(target.hasAttribute('data-developer-link')) {
+            return; // Exit if the click was on the developer link
+        }
+        target = target.parentElement as HTMLElement;
+    }
+    router.push(`/game/${game.id}`);
   };
 
+  const handleDeveloperClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click handler from firing
+    router.push(`/developer/${game.publisherId}`);
+  };
+
+
   return (
-    <Link href={`/game/${game.id}`} className="group flex items-center justify-between gap-4 rounded-lg p-2 transition-colors hover:bg-accent">
+    <div onClick={handleCardClick} className="group flex cursor-pointer items-center justify-between gap-4 rounded-lg p-2 transition-colors hover:bg-accent">
       <div className="flex flex-1 items-center gap-4">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
           <Image
@@ -50,9 +66,13 @@ export default function GameCard({ game }: GameCardProps) {
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-foreground">{game.title}</p>
           {game.developerName && game.publisherId ? (
-            <Link href={`/developer/${game.publisherId}`} onClick={handleDeveloperClick} className="text-sm text-primary hover:underline">
+            <div 
+              data-developer-link 
+              onClick={handleDeveloperClick} 
+              className="text-sm text-primary hover:underline w-fit"
+            >
               {game.developerName}
-            </Link>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">{game.genre}</p>
           )}
@@ -68,6 +88,6 @@ export default function GameCard({ game }: GameCardProps) {
             Install
         </Button>
       )}
-    </Link>
+    </div>
   );
 }
