@@ -87,7 +87,7 @@ function HomePageComponent() {
             filteredGames = allGames.filter(game => game.title.toLowerCase().includes(searchQuery.toLowerCase()));
         }
         
-        const featured = filteredGames.filter(g => g.isFeatured && g.featuredDescription);
+        const featured = allGames.filter(g => g.isFeatured && g.featuredDescription);
 
         const popular = [...allGames].sort((a, b) => (b.downloads || 0) - (a.downloads || 0)).slice(0, 5);
 
@@ -98,6 +98,21 @@ function HomePageComponent() {
     <div className="space-y-8 pb-8">
       <GameSearch />
 
+      {featuredGames.length > 0 && !searchQuery && (
+          <div className="space-y-4">
+              <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
+              <Carousel opts={{ loop: true }} className="w-full">
+                  <CarouselContent className="-ml-2">
+                      {featuredGames.map(game => (
+                          <CarouselItem key={game.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                              <FeaturedGameCard game={game} />
+                          </CarouselItem>
+                      ))}
+                  </CarouselContent>
+              </Carousel>
+          </div>
+      )}
+      
       <div className="space-y-4">
         <h2 className="px-4 text-2xl font-bold tracking-tight">For you</h2>
         <div className="flex flex-col gap-4 px-4">
@@ -118,21 +133,6 @@ function HomePageComponent() {
           )}
         </div>
       </div>
-
-      {featuredGames.length > 0 && !searchQuery && (
-          <div className="space-y-4">
-              <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
-              <Carousel opts={{ loop: true }} className="w-full">
-                  <CarouselContent className="-ml-2">
-                      {featuredGames.map(game => (
-                          <CarouselItem key={game.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
-                              <FeaturedGameCard game={game} />
-                          </CarouselItem>
-                      ))}
-                  </CarouselContent>
-              </Carousel>
-          </div>
-      )}
 
       {popularGames.length > 0 && !searchQuery && (
         <div className="space-y-4">
