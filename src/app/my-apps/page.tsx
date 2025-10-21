@@ -2,9 +2,9 @@
 
 import { useMemo } from 'react';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Gamepad, Loader2, Frown } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ interface PublishedGame {
   averageRating: number;
 }
 
-export default function MyAppsPage() {
+function MyAppsComponent() {
   const firestore = useFirestore();
   const { user } = useUser();
 
@@ -39,7 +39,7 @@ export default function MyAppsPage() {
   
   if (!games || games.length === 0) {
       return (
-          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center h-[50vh]">
+          <div className="flex h-[50vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                   <Frown className="h-8 w-8 text-primary" />
               </div>
@@ -86,4 +86,12 @@ export default function MyAppsPage() {
       </div>
     </div>
   );
+}
+
+export default function MyAppsPage() {
+    return (
+        <FirebaseClientProvider>
+            <MyAppsComponent />
+        </FirebaseClientProvider>
+    )
 }

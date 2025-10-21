@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart2, Gamepad, Loader2, Frown, Users, Star } from 'lucide-react';
@@ -16,7 +16,7 @@ interface PublishedGame {
   averageRating: number;
 }
 
-export default function AnalyticsPage() {
+function AnalyticsComponent() {
   const firestore = useFirestore();
   const { user } = useUser();
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="container mx-auto space-y-8 py-8">
       <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
         <BarChart2 className="h-8 w-8"/>
         Game Analytics
@@ -152,4 +152,13 @@ export default function AnalyticsPage() {
       </Card>
     </div>
   );
+}
+
+
+export default function AnalyticsPage() {
+    return (
+        <FirebaseClientProvider>
+            <AnalyticsComponent />
+        </FirebaseClientProvider>
+    )
 }

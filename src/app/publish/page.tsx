@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState } from 'react';
-import { useAuth, useFirestore, useUser } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useFirestore, useUser, FirebaseClientProvider } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function PublishPage() {
+function PublishComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -158,4 +158,12 @@ export default function PublishPage() {
         </Card>
     </div>
   );
+}
+
+export default function PublishPage() {
+    return (
+        <FirebaseClientProvider>
+            <PublishComponent />
+        </FirebaseClientProvider>
+    )
 }
