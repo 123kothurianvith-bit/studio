@@ -1,0 +1,87 @@
+/**
+ * @fileoverview Firestore Security Rules for Snapter Games
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user accounts and their associated wishlists.
+ * Games are publicly readable, but write access is restricted.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user account information.
+ * - /users/{userId}/wishlists/{wishlistId}: Stores user wishlists.
+ * - /games/{gameId}: Stores game information.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own user account data and wishlists.
+ * - Games are publicly readable.
+ * - Write access to the games collection is denied for standard users.
+ *
+ * Denormalization for Authorization:
+ * - Wishlist documents contain a denormalized 'userAccountId' field, matching the 'userId' in the path. This field is validated on create and kept immutable on update to ensure path consistency.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user account documents.
+     * @path /users/{userId}
+     * @allow (create) User with matching UID can create their own account.
+     * @allow (get, list, update, delete) User with matching UID can access their own account.
+     * @deny (create) User cannot create an account with a different UID.
+     * @deny (get, list, update, delete) User cannot access other user accounts.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false; // Listing all users is not permitted.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && resource != null && request.resource.data.id == resource.data.id; // Enforce immutability of id
+      allow delete: if isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Controls access to user wishlists.
+     * @path /users/{userId}/wishlists/{wishlistId}
+     * @allow (create) User with matching UID can create a wishlist for themselves.
+     * @allow (get, list, update, delete) User with matching UID can access their own wishlists.
+     * @deny (create) User cannot create a wishlist with a different UID.
+     * @deny (get, list, update, delete) User cannot access other user's wishlists.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/wishlists/{wishlistId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userAccountId == userId;
+      allow update: if isOwner(userId) && resource != null && request.resource.data.userAccountId == resource.data.userAccountId; // Enforce immutability of userAccountId
+      allow delete: if isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Controls access to game documents.
+     * @path /games/{gameId}
+     * @allow (get, list) Anyone can read game information.
+     * @deny (create, update, delete) Only authorized users (e.g., admins) can modify game information.
+     * @principle Public read, restricted write access.
+     */
+    match /games/{gameId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add role-based validation for admins once roles are defined.
+    }
+  }
+}

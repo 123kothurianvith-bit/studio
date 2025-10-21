@@ -1,0 +1,161 @@
+{
+  "entities": {
+    "UserAccount": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAccount",
+      "type": "object",
+      "description": "Represents a user account within the Snapter Games application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user account."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "wishlistIds": {
+          "type": "array",
+          "description": "References to Wishlists. (Relationship: UserAccount 1:N Wishlist)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "email"
+      ]
+    },
+    "Game": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Game",
+      "type": "object",
+      "description": "Represents a game available on the Snapter Games platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the game."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the game."
+        },
+        "platform": {
+          "type": "string",
+          "description": "The platform on which the game is available (e.g., PC, PS5, Xbox Series X)."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the game."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the game."
+        },
+        "genre": {
+          "type": "string",
+          "description": "The genre of the game (e.g., Action, RPG, Strategy)."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "platform",
+        "price",
+        "description"
+      ]
+    },
+    "Wishlist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Wishlist",
+      "type": "object",
+      "description": "Represents a user's wishlist of games.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the wishlist."
+        },
+        "userAccountId": {
+          "type": "string",
+          "description": "Reference to UserAccount. (Relationship: UserAccount 1:N Wishlist)"
+        },
+        "gameIds": {
+          "type": "array",
+          "description": "References to Games. (Relationship: Wishlist N:N Game)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userAccountId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserAccount",
+          "schema": {
+            "$ref": "#/backend/entities/UserAccount"
+          },
+          "description": "Stores user account information. Uses path-based ownership for private data. Includes email for user identification.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching Firebase auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/wishlists/{wishlistId}",
+        "definition": {
+          "entityName": "Wishlist",
+          "schema": {
+            "$ref": "#/backend/entities/Wishlist"
+          },
+          "description": "Stores user wishlists. Path-based ownership is applied to enforce privacy. 'userId' is denormalized into the 'Wishlist' document for authorization independence.  It also includes userAccountId for quick querying, but the path `/users/{userId}/wishlists/{wishlistId}` remains the primary authorization mechanism.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns the wishlist."
+            },
+            {
+              "name": "wishlistId",
+              "description": "The unique identifier for the wishlist."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/games/{gameId}",
+        "definition": {
+          "entityName": "Game",
+          "schema": {
+            "$ref": "#/backend/entities/Game"
+          },
+          "description": "Stores game information.  This collection is publicly readable but write access is controlled via Firebase Authentication and potentially DBAC (Database Authentication and Authorization via a dedicated role).",
+          "params": [
+            {
+              "name": "gameId",
+              "description": "The unique identifier for the game."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability, following the specified design principles. User accounts are stored in `/users/{userId}`, with wishlists as subcollections.  This structure avoids hierarchical authorization dependencies by relying solely on `request.auth.uid` and path-based ownership for user-specific data. Games are stored in a top-level `/games` collection. Authorization Independence is achieved since there is no need for `get()` calls to check parent document data, as ownership is implied by the path for user-owned resources. The structure supports the required QAPs by segregating data based on access needs (private user data under `/users/{userId}` and public game data under `/games`)."
+  }
+}
