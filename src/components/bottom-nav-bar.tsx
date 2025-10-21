@@ -52,7 +52,7 @@ export default function BottomNavBar() {
             )}
           >
             <item.icon className="h-6 w-6" />
-            <span className="text-xs">{item.label}</span>
+            <span className="whitespace-nowrap text-xs">{item.label}</span>
           </Link>
         ))}
 
@@ -71,7 +71,7 @@ export default function BottomNavBar() {
                         <AvatarImage src={user.photoURL || undefined} alt="User avatar" />
                         <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs">Account</span>
+                    <span className="whitespace-nowrap text-xs">Account</span>
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 mb-2" align="end" forceMount>
@@ -107,4 +107,3 @@ export default function BottomNavBar() {
     </nav>
   );
 }
-
