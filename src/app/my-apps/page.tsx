@@ -91,18 +91,20 @@ function MyAppsComponent() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {games.map((game) => (
           <Card key={game.id} className="overflow-hidden">
-            <CardHeader className="p-0">
-                <div className="relative aspect-square w-full">
-                    <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
-                </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <CardTitle className="truncate text-xl">{game.gameName}</CardTitle>
-              <div className="mt-2 flex justify-between text-sm text-muted-foreground">
-                <span>Downloads: {game.downloads}</span>
-                <span>Rating: {game.averageRating.toFixed(1)} ★</span>
-              </div>
-            </CardContent>
+             <Link href={`/game/${game.id}`}>
+              <CardContent className="p-4 flex items-center gap-4">
+                  <div className="relative aspect-square w-16 h-16 shrink-0 overflow-hidden rounded-2xl">
+                      <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
+                  </div>
+                  <div className='flex-1'>
+                    <CardTitle className="truncate text-lg">{game.gameName}</CardTitle>
+                    <div className="mt-1 flex justify-between text-sm text-muted-foreground">
+                      <span>Downloads: {game.downloads}</span>
+                      <span>Rating: {game.averageRating.toFixed(1)} ★</span>
+                    </div>
+                  </div>
+              </CardContent>
+            </Link>
           </Card>
         ))}
       </div>

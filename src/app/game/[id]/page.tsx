@@ -156,7 +156,7 @@ function GameDetailPageComponent() {
   return (
     <div className="container mx-auto max-w-5xl space-y-8 py-4 sm:py-8">
       <header className="flex flex-col gap-6 sm:flex-row">
-        <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-3xl sm:h-40 sm:w-40">
+        <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl shadow-lg sm:h-40 sm:w-40 sm:rounded-[28px]">
           <Image src={game.iconUrl} alt={game.gameName} fill className="object-cover" />
         </div>
         <div className="flex flex-col justify-center space-y-3">
