@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -8,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Star, Download } from 'lucide-react';
+import { Loader2, Star, Download, Edit } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ interface PublishedGame {
   averageRating: number;
   ratings: { userId: string; rating: number }[];
   createdAt: any;
+  whatsNew?: string;
 }
 
 function StarRating({ currentRating, onRate, disabled }: { currentRating: number, onRate: (rating: number) => void, disabled: boolean }) {
@@ -130,6 +132,8 @@ function GameDetailPageComponent() {
       }
     }
   };
+  
+  const isPublisher = user && game && user.uid === game.publisherId;
 
   if (isLoading) {
     return (
@@ -167,15 +171,38 @@ function GameDetailPageComponent() {
           </CardContent>
         </Card>
         
-        <div className='px-4 sm:px-0'>
+        <div className='flex items-center gap-4 px-4 sm:px-0'>
             <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl}>
                 <Download className="mr-2 h-5 w-5"/>
                 Install
             </Button>
+            {isPublisher && (
+              <Button asChild variant="outline" size="lg">
+                <Link href={`/game/${id}/edit`}>
+                  <Edit className="mr-2 h-5 w-5" />
+                  Edit
+                </Link>
+              </Button>
+            )}
         </div>
         
         <Separator />
         
+        {game.whatsNew && (
+            <>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>What's New</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="whitespace-pre-wrap text-sm text-muted-foreground">{game.whatsNew}</p>
+                    </CardContent>
+                </Card>
+                <Separator />
+            </>
+        )}
+
+
         <Card>
             <CardHeader>
                 <CardTitle>Ratings and reviews</CardTitle>
@@ -238,3 +265,5 @@ export default function GameDetailPage() {
         </FirebaseClientProvider>
     );
 }
+
+    
