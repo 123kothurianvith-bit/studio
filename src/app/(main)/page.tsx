@@ -2,7 +2,6 @@
 
 import React, { Suspense, useMemo } from 'react';
 import GameBrowser from '@/components/game-browser';
-import { games as staticGames } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import GameSearch from '@/components/game-search';
 import { useCollection } from '@/firebase/firestore/use-collection';
@@ -41,25 +40,25 @@ function HomePageComponent() {
         return collection(firestore, 'publishedGames');
     }, [firestore]);
 
-    const { data: publishedGames, isLoading } = useCollection<PublishedGame>(publishedGamesQuery);
+    const { data: publishedGames } = useCollection<PublishedGame>(publishedGamesQuery);
 
     const allGames = useMemo(() => {
         if (!publishedGames) {
-            return staticGames;
+            return [];
         }
 
         const transformedGames: Game[] = publishedGames.map(pg => ({
             id: pg.id,
             title: pg.gameName,
-            platform: 'PC', // Default platform
-            price: 0, // Default price
-            genre: 'Adventure', // Default genre
-            description: 'A user published game.', // Default description
+            platform: 'Android', 
+            price: 0, 
+            genre: 'User Published', 
+            description: 'A user published game.',
             coverImage: pg.iconUrl,
             imageHint: 'user game',
         }));
 
-        return [...staticGames, ...transformedGames];
+        return transformedGames;
     }, [publishedGames]);
 
   return (

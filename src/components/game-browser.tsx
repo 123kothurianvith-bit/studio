@@ -15,17 +15,13 @@ export default function GameBrowser({ allGames }: GameBrowserProps) {
 
   const filteredGames = useMemo(() => {
     const searchTerm = searchParams.get('q')?.toLowerCase() || '';
-    const platform = searchParams.get('platform');
     const genre = searchParams.get('genre');
-    const maxPrice = searchParams.get('price') ? parseFloat(searchParams.get('price')) : Infinity;
 
     return allGames.filter((game) => {
       const matchesSearch = game.title.toLowerCase().includes(searchTerm);
-      const matchesPlatform = !platform || game.platform === platform;
       const matchesGenre = !genre || game.genre === genre;
-      const matchesPrice = game.price <= maxPrice;
       
-      return matchesSearch && matchesPlatform && matchesGenre && matchesPrice;
+      return matchesSearch && matchesGenre;
     });
   }, [searchParams, allGames]);
 

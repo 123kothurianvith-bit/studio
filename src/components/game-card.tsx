@@ -4,7 +4,7 @@ import Image from 'next/image';
 import type { Game } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Heart, Laptop, Gamepad2 } from 'lucide-react';
+import { Heart, Download } from 'lucide-react';
 import { useWishlist } from '@/contexts/wishlist-context';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -23,10 +23,6 @@ export default function GameCard({ game }: GameCardProps) {
       addToWishlist(game.id);
     }
   };
-
-  const platformIcon = game.platform === 'PC' 
-    ? <Laptop className="h-4 w-4" /> 
-    : <Gamepad2 className="h-4 w-4" />;
   
   return (
     <Card className="flex h-full transform flex-col overflow-hidden bg-card transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20">
@@ -53,7 +49,7 @@ export default function GameCard({ game }: GameCardProps) {
         <CardTitle className="truncate text-xl">{game.title}</CardTitle>
         <div className="flex items-center justify-between text-sm text-muted-foreground">
             <Badge variant="secondary" className="flex items-center gap-2">
-                {platformIcon}
+                <Download className="h-4 w-4" />
                 <span>{game.platform}</span>
             </Badge>
             <Badge variant="outline">{game.genre}</Badge>
@@ -63,9 +59,8 @@ export default function GameCard({ game }: GameCardProps) {
         <p className="text-sm text-muted-foreground line-clamp-3">{game.description}</p>
       </CardContent>
       <CardFooter>
-        <div className="flex w-full items-center justify-between">
-          <p className="text-2xl font-bold text-accent">${game.price.toFixed(2)}</p>
-          <Button>Add to Cart</Button>
+        <div className="flex w-full items-center justify-end">
+          <Button>Install</Button>
         </div>
       </CardFooter>
     </Card>

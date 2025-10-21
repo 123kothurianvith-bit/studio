@@ -156,19 +156,14 @@ export default function ClientSidebar({
             <div className="space-y-2">
               <Label htmlFor="platform-filter">Platform</Label>
               <Select
-                value={searchParams.get('platform') || 'all'}
-                onValueChange={(value) => handleFilterChange('platform', value)}
+                value="Android"
+                disabled
               >
                 <SelectTrigger id="platform-filter">
                   <SelectValue placeholder="All Platforms" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Platforms</SelectItem>
-                  {platforms.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="Android">Android</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -196,21 +191,6 @@ export default function ClientSidebar({
               </Select>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="price-slider">Max Price</Label>
-                <span className="text-sm font-medium text-accent">
-                  ${searchParams.get('price') || maxPrice}
-                </span>
-              </div>
-              <Slider
-                id="price-slider"
-                max={maxPrice}
-                step={1}
-                defaultValue={[parseInt(searchParams.get('price') || String(maxPrice), 10)]}
-                onValueCommit={handlePriceChange}
-              />
-            </div>
           </div>
         </SidebarGroup>
       </SidebarContent>

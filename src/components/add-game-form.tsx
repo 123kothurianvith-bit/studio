@@ -33,7 +33,7 @@ const formSchema = z.object({
   title: z.string().min(2, {
     message: "Title must be at least 2 characters.",
   }),
-  platform: z.enum(['PC', 'PlayStation 5', 'Xbox Series X', 'Nintendo Switch']),
+  platform: z.literal('Android'),
   genre: z.enum(['Action', 'RPG', 'Strategy', 'Adventure', 'Sports']),
   keyFeatures: z.string().min(10, {
     message: "Please list at least one key feature."
@@ -54,6 +54,7 @@ export default function AddGameForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      platform: "Android",
       keyFeatures: "",
       targetAudience: "",
       description: "",
@@ -131,17 +132,14 @@ export default function AddGameForm() {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Platform</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a platform" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        <SelectItem value="PC">PC</SelectItem>
-                        <SelectItem value="PlayStation 5">PlayStation 5</SelectItem>
-                        <SelectItem value="Xbox Series X">Xbox Series X</SelectItem>
-                        <SelectItem value="Nintendo Switch">Nintendo Switch</SelectItem>
+                        <SelectItem value="Android">Android</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />

@@ -12,8 +12,8 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const platforms = [...new Set(games.map((g) => g.platform))];
-  const genres = [...new Set(games.map((g) => g.genre))];
-  const maxPrice = Math.ceil(Math.max(...games.map((g) => g.price)));
+  const genres = ['Action', 'RPG', 'Strategy', 'Adventure', 'Sports', 'User Published'];
+  const maxPrice = 0;
 
   return (
     <FirebaseClientProvider>
