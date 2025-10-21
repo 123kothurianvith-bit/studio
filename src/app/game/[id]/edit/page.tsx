@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { useForm, zodResolver } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -204,5 +205,3 @@ export default function EditGamePage() {
         </FirebaseClientProvider>
     )
 }
-
-    
