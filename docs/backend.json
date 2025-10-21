@@ -168,6 +168,10 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of when the game was published."
+        },
+        "featuredImageUrl": {
+          "type": "string",
+          "description": "URL for the game's featured image banner."
         }
       },
       "required": [

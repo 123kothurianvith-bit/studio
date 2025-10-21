@@ -9,6 +9,9 @@ import { useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Game } from '@/lib/types';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import FeaturedGameCard from '@/components/featured-game-card';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+
 
 function GameBrowserLoader() {
   return (
@@ -36,6 +39,7 @@ interface PublishedGame {
   averageRating: number;
   publisherId: string;
   developerName: string;
+  featuredImageUrl?: string;
   [key: string]: any;
 }
 
@@ -50,12 +54,12 @@ function HomePageComponent() {
 
     const { data: publishedGames } = useCollection<PublishedGame>(publishedGamesQuery);
 
-    const allGames = useMemo(() => {
+    const { featuredGames, regularGames } = useMemo(() => {
         if (!publishedGames) {
-            return [];
+            return { featuredGames: [], regularGames: [] };
         }
 
-        const transformedGames: Game[] = publishedGames.map(pg => ({
+        const allGames: Game[] = publishedGames.map(pg => ({
             id: pg.id,
             title: pg.gameName,
             platform: 'Android', 
@@ -68,16 +72,36 @@ function HomePageComponent() {
             averageRating: pg.averageRating,
             publisherId: pg.publisherId,
             developerName: pg.developerName,
+            featuredImageUrl: pg.featuredImageUrl,
         }));
+        
+        const featured = allGames.filter(g => g.featuredImageUrl);
+        const regular = allGames.filter(g => !g.featuredImageUrl);
 
-        return transformedGames;
+        return { featuredGames: featured, regularGames: regular };
     }, [publishedGames]);
 
   return (
     <div className="space-y-8">
       <GameSearch />
+
+      {featuredGames.length > 0 && (
+          <div className="space-y-4">
+              <h2 className="text-2xl font-bold tracking-tight">Featured Games</h2>
+              <Carousel opts={{ loop: true }} className="w-full">
+                  <CarouselContent>
+                      {featuredGames.map(game => (
+                          <CarouselItem key={game.id}>
+                              <FeaturedGameCard game={game} />
+                          </CarouselItem>
+                      ))}
+                  </CarouselContent>
+              </Carousel>
+          </div>
+      )}
+
       <Suspense fallback={<GameBrowserLoader />}>
-        <GameBrowser allGames={allGames} />
+        <GameBrowser allGames={regularGames} />
       </Suspense>
     </div>
   );

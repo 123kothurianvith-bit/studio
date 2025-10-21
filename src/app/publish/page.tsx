@@ -28,6 +28,7 @@ const formSchema = z.object({
   developerName: z.string().min(2, { message: 'Developer name must be at least 2 characters.' }),
   iconUrl: z.string().url({ message: 'Please enter a valid URL for the game icon.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
+  featuredImageUrl: z.string().url({ message: 'Please enter a valid URL for the featured image.' }).optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,6 +53,7 @@ function PublishComponent() {
       developerName: '',
       iconUrl: '',
       downloadUrl: '',
+      featuredImageUrl: '',
     },
   });
 
@@ -206,6 +208,20 @@ function PublishComponent() {
                             <Input placeholder="https://example.com/game.zip" {...field} />
                             </FormControl>
                              <FormDescription>The direct download link for your game file.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="featuredImageUrl"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Featured Image URL (Optional)</FormLabel>
+                            <FormControl>
+                            <Input placeholder="https://example.com/featured-banner.png" {...field} />
+                            </FormControl>
+                             <FormDescription>A wide banner image (e.g., 16:9) to be shown on the homepage.</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}

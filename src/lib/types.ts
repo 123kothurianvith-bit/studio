@@ -13,4 +13,5 @@ export type Game = {
   averageRating?: number;
   publisherId?: string;
   developerName?: string;
+  featuredImageUrl?: string;
 };
