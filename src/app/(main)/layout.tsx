@@ -3,6 +3,7 @@ import ClientSidebar from '@/components/client-sidebar';
 import Header from '@/components/header';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { games } from '@/lib/data';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export default function MainLayout({
   children,
@@ -14,16 +15,18 @@ export default function MainLayout({
   const maxPrice = Math.ceil(Math.max(...games.map((g) => g.price)));
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <ClientSidebar platforms={platforms} genres={genres} maxPrice={maxPrice} />
-      </Sidebar>
-      <SidebarInset>
-        <Header />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <FirebaseClientProvider>
+      <SidebarProvider>
+        <Sidebar>
+          <ClientSidebar platforms={platforms} genres={genres} maxPrice={maxPrice} />
+        </Sidebar>
+        <SidebarInset>
+          <Header />
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </FirebaseClientProvider>
   );
 }
