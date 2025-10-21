@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, FirebaseClientProvider } from '@/firebase';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function SignUpPage() {
+function SignUpComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();
@@ -133,4 +133,12 @@ export default function SignUpPage() {
       </Card>
     </div>
   );
+}
+
+export default function SignUpPage() {
+    return (
+        <FirebaseClientProvider>
+            <SignUpComponent />
+        </FirebaseClientProvider>
+    )
 }
