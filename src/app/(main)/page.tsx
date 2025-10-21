@@ -41,6 +41,7 @@ interface PublishedGame {
   featuredDescription?: string;
   featuredImageUrl?: string;
   iconUrl?: string;
+  downloads?: number;
   [key: string]: any;
 }
 
@@ -57,9 +58,9 @@ function HomePageComponent() {
 
     const { data: publishedGames, isLoading } = useCollection<PublishedGame>(publishedGamesQuery);
 
-    const { featuredGames, regularGames } = useMemo(() => {
+    const { featuredGames, popularGames, regularGames } = useMemo(() => {
         if (!publishedGames) {
-            return { featuredGames: [], regularGames: [] };
+            return { featuredGames: [], popularGames: [], regularGames: [] };
         }
 
         let allGames: Game[] = publishedGames.map(pg => ({
@@ -78,6 +79,7 @@ function HomePageComponent() {
             featuredDescription: pg.featuredDescription,
             featuredImageUrl: pg.featuredImageUrl,
             iconUrl: pg.iconUrl,
+            downloads: pg.downloads || 0,
         }));
         
         let filteredGames = allGames;
@@ -87,7 +89,9 @@ function HomePageComponent() {
         
         const featured = filteredGames.filter(g => g.isFeatured && g.featuredDescription);
 
-        return { featuredGames: featured, regularGames: filteredGames };
+        const popular = [...allGames].sort((a, b) => (b.downloads || 0) - (a.downloads || 0)).slice(0, 5);
+
+        return { featuredGames: featured, popularGames: popular, regularGames: filteredGames };
     }, [publishedGames, searchQuery]);
 
   return (
@@ -107,6 +111,15 @@ function HomePageComponent() {
                   </CarouselContent>
               </Carousel>
           </div>
+      )}
+
+      {popularGames.length > 0 && !searchQuery && (
+        <div className="space-y-4">
+            <h2 className="px-4 text-2xl font-bold tracking-tight">What's buzzing</h2>
+            <div className="flex flex-col gap-4 px-4">
+                {popularGames.map((game) => <GameCard key={game.id} game={game} />)}
+            </div>
+        </div>
       )}
 
       <div className="space-y-4">

@@ -18,6 +18,7 @@ export type Game = {
   featuredDescription?: string;
   featuredImageUrl?: string;
   iconUrl?: string;
+  downloads?: number;
 };
 
     
