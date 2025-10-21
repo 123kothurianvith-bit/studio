@@ -49,7 +49,7 @@ function HomePageComponent() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('q');
-    const plugin = useRef(Autoplay({ delay: 30000, stopOnInteraction: true }))
+    const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }))
 
 
     const publishedGamesQuery = useMemoFirebase(() => {
