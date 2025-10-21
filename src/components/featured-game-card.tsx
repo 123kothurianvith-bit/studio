@@ -21,16 +21,16 @@ const gradients = [
     'from-green-400 to-blue-500',
 ];
 
-const getGradientForCard = (title: string) => {
-    const charCodeSum = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return gradients[charCodeSum % gradients.length];
+const getGradientForCard = (index: number) => {
+    return gradients[index % gradients.length];
 };
 
 type FeaturedGameCardProps = {
   game: Game;
+  index: number;
 };
 
-export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
+export default function FeaturedGameCard({ game, index }: FeaturedGameCardProps) {
   const firestore = useFirestore();
   const router = useRouter();
 
@@ -49,7 +49,7 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
     router.push(`/game/${game.id}`);
   };
   
-  const cardGradient = getGradientForCard(game.title);
+  const cardGradient = getGradientForCard(index);
 
   return (
     <Card

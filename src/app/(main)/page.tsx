@@ -99,9 +99,9 @@ function HomePageComponent() {
               <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
               <Carousel opts={{ loop: true }} className="w-full">
                   <CarouselContent className="-ml-2">
-                      {featuredGames.map(game => (
+                      {featuredGames.map((game, index) => (
                           <CarouselItem key={game.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
-                              <FeaturedGameCard game={game} />
+                              <FeaturedGameCard game={game} index={index} />
                           </CarouselItem>
                       ))}
                   </CarouselContent>
