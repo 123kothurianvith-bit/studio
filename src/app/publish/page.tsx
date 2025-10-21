@@ -48,7 +48,7 @@ function PublishComponent() {
     },
   });
 
-  async function onSubmit(values: FormValues) {
+  function onSubmit(values: FormValues) {
     if (!firestore || !user) {
       toast({
         title: 'Authentication Error',
@@ -71,7 +71,7 @@ function PublishComponent() {
         createdAt: new Date(),
       };
 
-      await addDocumentNonBlocking(gamesCollection, newGameData);
+      addDocumentNonBlocking(gamesCollection, newGameData);
       
       toast({
         title: 'Game Published!',
