@@ -38,7 +38,6 @@ const formSchema = z.object({
   gameName: z.string().min(2, { message: 'Game name must be at least 2 characters.' }),
   developerName: z.string().min(2, { message: 'Developer name must be at least 2 characters.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
-  iconUrl: z.string().url().optional(),
   isFeatured: z.boolean().optional(),
   featuredDescription: z.string().optional(),
   // AI fields
@@ -55,14 +54,6 @@ const formSchema = z.object({
 }, {
     message: "Featured description must be at least 10 characters long when game is featured.",
     path: ["featuredDescription"],
-}).refine(data => {
-    if (data.isFeatured && (!data.iconUrl)) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Game icon URL is required when game is featured.",
-    path: ["iconUrl"],
 });
 
 
@@ -82,7 +73,6 @@ function PublishComponent() {
       gameName: '',
       developerName: '',
       downloadUrl: '',
-      iconUrl: '',
       isFeatured: false,
       featuredDescription: '',
       keyFeatures: "",
@@ -311,20 +301,6 @@ function PublishComponent() {
                                 <Textarea placeholder="Enter a short, catchy description for the featured games section..." {...field} />
                                 </FormControl>
                                 <FormDescription>This description will be shown on the featured game card on the homepage.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="iconUrl"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Game Icon URL</FormLabel>
-                                <FormControl>
-                                <Input placeholder="https://example.com/icon.png" {...field} />
-                                </FormControl>
-                                <FormDescription>The small icon for the featured card details.</FormDescription>
                                 <FormMessage />
                             </FormItem>
                             )}

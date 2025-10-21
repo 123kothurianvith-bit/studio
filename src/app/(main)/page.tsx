@@ -39,7 +39,6 @@ interface PublishedGame {
   developerName: string;
   isFeatured?: boolean;
   featuredDescription?: string;
-  iconUrl?: string;
   downloads?: number;
   [key: string]: any;
 }
@@ -76,7 +75,6 @@ function HomePageComponent() {
             developerName: pg.developerName,
             isFeatured: pg.isFeatured,
             featuredDescription: pg.featuredDescription,
-            iconUrl: pg.iconUrl,
             downloads: pg.downloads || 0,
         }));
         

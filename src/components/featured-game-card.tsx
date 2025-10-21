@@ -7,7 +7,6 @@ import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from './ui/card';
-import Image from 'next/image';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -57,37 +56,26 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
       onClick={handleCardClick}
       className="group w-full cursor-pointer overflow-hidden rounded-2xl border-0 shadow-lg transition-all"
     >
-      <div className={cn("relative aspect-[16/9] w-full bg-gradient-to-br", cardGradient)}>
-        <div className="absolute inset-0 flex items-center justify-center p-4">
-           <h3 className="text-center text-xl font-bold text-white drop-shadow-md">
+      <div className={cn("relative flex aspect-[16/9] w-full flex-col justify-between bg-gradient-to-br p-4", cardGradient)}>
+        <div className="flex-1">
+           <h3 className="text-xl font-bold text-white drop-shadow-md">
                 {game.featuredDescription}
             </h3>
         </div>
-      </div>
-      <CardContent className="flex items-center gap-4 p-4">
-        {game.iconUrl && (
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
-                 <Image
-                    src={game.iconUrl}
-                    alt={`${game.title} icon`}
-                    width={64}
-                    height={64}
-                    className="object-cover"
-                />
+        <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 overflow-hidden">
+                <h4 className="truncate font-semibold text-white">{game.title}</h4>
+                <p className="truncate text-sm text-white/80">{game.developerName}</p>
+                <div className="mt-1 flex items-center gap-1 text-sm text-white/80">
+                    <span>{game.averageRating?.toFixed(1) ?? 'New'}</span>
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                </div>
             </div>
-        )}
-        <div className="flex-1 overflow-hidden">
-          <h4 className="truncate font-semibold text-foreground">{game.title}</h4>
-          <p className="truncate text-sm text-muted-foreground">{game.developerName}</p>
-           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-            <span>{game.averageRating?.toFixed(1) ?? 'New'}</span>
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-          </div>
+            <Button onClick={handleInstallClick} size="sm" className="shrink-0 rounded-full bg-white text-black hover:bg-white/90" disabled={!game.downloadUrl}>
+                Install
+            </Button>
         </div>
-        <Button onClick={handleInstallClick} size="sm" className="shrink-0 rounded-full" disabled={!game.downloadUrl}>
-            Install
-        </Button>
-      </CardContent>
+      </div>
     </Card>
   );
 }
