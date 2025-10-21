@@ -91,7 +91,11 @@ export default function ClientSidebar({
   return (
     <>
       <SidebarHeader>
-        <h2 className="text-xl font-semibold text-foreground">Snapter Games</h2>
+        <h2 className="text-xl font-semibold">
+           <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
+              Snapter Games
+            </span>
+        </h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
