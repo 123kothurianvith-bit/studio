@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserAccount": {
@@ -169,9 +170,13 @@
           "format": "date-time",
           "description": "Timestamp of when the game was published."
         },
-        "featuredImageUrl": {
+        "isFeatured": {
+          "type": "boolean",
+          "description": "Whether the game is featured on the homepage."
+        },
+        "featuredDescription": {
           "type": "string",
-          "description": "URL for the game's featured image banner."
+          "description": "A short description used when the game is featured."
         }
       },
       "required": [

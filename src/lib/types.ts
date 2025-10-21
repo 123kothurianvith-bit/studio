@@ -1,3 +1,4 @@
+
 import type { ImagePlaceholder } from './placeholder-images';
 
 export type Game = {
@@ -13,5 +14,6 @@ export type Game = {
   averageRating?: number;
   publisherId?: string;
   developerName?: string;
-  featuredImageUrl?: string;
+  isFeatured?: boolean;
+  featuredDescription?: string;
 };

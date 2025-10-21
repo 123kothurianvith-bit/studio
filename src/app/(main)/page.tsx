@@ -42,7 +42,8 @@ interface PublishedGame {
   averageRating: number;
   publisherId: string;
   developerName: string;
-  featuredImageUrl?: string;
+  isFeatured?: boolean;
+  featuredDescription?: string;
   [key: string]: any;
 }
 
@@ -54,7 +55,6 @@ function HomePageComponent() {
 
     const publishedGamesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        // The query will fetch all games, filtering will happen client-side
         return collection(firestore, 'publishedGames');
     }, [firestore]);
 
@@ -78,7 +78,8 @@ function HomePageComponent() {
             averageRating: pg.averageRating,
             publisherId: pg.publisherId,
             developerName: pg.developerName,
-            featuredImageUrl: pg.featuredImageUrl,
+            isFeatured: pg.isFeatured,
+            featuredDescription: pg.featuredDescription,
         }));
         
         let filteredGames = allGames;
@@ -86,9 +87,8 @@ function HomePageComponent() {
             filteredGames = allGames.filter(game => game.title.toLowerCase().includes(searchQuery.toLowerCase()));
         }
         
-        const featured = filteredGames.filter(g => g.featuredImageUrl);
+        const featured = filteredGames.filter(g => g.isFeatured && g.featuredDescription);
 
-        // Regular games should be ALL games that match the search, not just non-featured ones.
         return { featuredGames: featured, regularGames: filteredGames };
     }, [publishedGames, searchQuery]);
 

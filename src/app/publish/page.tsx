@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,20 +32,31 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, Frown, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const formSchema = z.object({
   gameName: z.string().min(2, { message: 'Game name must be at least 2 characters.' }),
   developerName: z.string().min(2, { message: 'Developer name must be at least 2 characters.' }),
   iconUrl: z.string().url({ message: 'Please enter a valid URL for the game icon.' }),
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
-  featuredImageUrl: z.string().url({ message: 'Please enter a valid URL for the featured image.' }).optional().or(z.literal('')),
+  isFeatured: z.boolean().optional(),
+  featuredDescription: z.string().optional(),
   // AI fields
   genre: z.enum(['Action', 'RPG', 'Strategy', 'Adventure', 'Sports']),
   keyFeatures: z.string().min(10, { message: "Please list at least one key feature." }),
   targetAudience: z.string().min(3, { message: "Please describe the target audience." }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters long.'}),
   whatsNew: z.string().optional(),
+}).refine(data => {
+    if (data.isFeatured && (!data.featuredDescription || data.featuredDescription.length < 10)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Featured description must be at least 10 characters long when game is featured.",
+    path: ["featuredDescription"],
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -56,12 +68,6 @@ function PublishComponent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isUserLoading && user?.profile?.role !== 'developer') {
-        router.replace('/');
-    }
-  }, [user, isUserLoading, router]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -69,13 +75,16 @@ function PublishComponent() {
       developerName: '',
       iconUrl: '',
       downloadUrl: '',
-      featuredImageUrl: '',
+      isFeatured: false,
+      featuredDescription: '',
       keyFeatures: "",
       targetAudience: "",
       description: "",
       whatsNew: "",
     },
   });
+
+  const isFeaturedValue = form.watch('isFeatured');
 
   async function handleGenerateDescription() {
     const { gameName, genre, keyFeatures, targetAudience } = form.getValues();
@@ -272,20 +281,47 @@ function PublishComponent() {
                         </FormItem>
                         )}
                     />
-                     <FormField
+                    
+                    <FormField
                         control={form.control}
-                        name="featuredImageUrl"
+                        name="isFeatured"
                         render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Featured Image URL (Optional)</FormLabel>
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                             <FormControl>
-                            <Input placeholder="https://example.com/featured-banner.png" {...field} />
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
                             </FormControl>
-                             <FormDescription>A wide banner image (e.g., 16:9) to be shown on the homepage.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                Feature this game
+                                </FormLabel>
+                                <FormDescription>
+                                Featured games appear in a special section on the homepage.
+                                </FormDescription>
+                            </div>
+                            </FormItem>
                         )}
                     />
+
+                    {isFeaturedValue && (
+                        <FormField
+                            control={form.control}
+                            name="featuredDescription"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Featured Game Description</FormLabel>
+                                <FormControl>
+                                <Textarea placeholder="Enter a short, catchy description for the featured games section..." {...field} />
+                                </FormControl>
+                                <FormDescription>This description will be shown on the featured game card on the homepage.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    )}
+
 
                     <FormField
                       control={form.control}
@@ -411,5 +447,3 @@ export default function PublishPage() {
         </FirebaseClientProvider>
     )
 }
-
-    

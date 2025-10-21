@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -7,6 +8,7 @@ import { Download } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 type FeaturedGameCardProps = {
   game: Game;
@@ -32,35 +34,27 @@ export default function FeaturedGameCard({ game }: FeaturedGameCardProps) {
   };
 
   return (
-    <div
+    <Card
       onClick={handleCardClick}
-      className="group relative aspect-[16/9] w-full cursor-pointer overflow-hidden rounded-xl"
+      className="group w-full cursor-pointer overflow-hidden transition-all hover:bg-accent"
     >
-      {game.featuredImageUrl && (
-        <Image
-          src={game.featuredImageUrl}
-          alt={game.title}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-        <h3 className="text-xl font-bold">{game.title}</h3>
-        <p className="mt-1 line-clamp-2 text-sm text-neutral-300">
-          {game.description}
-        </p>
-        <Button
-          onClick={handleInstallClick}
-          variant="secondary"
-          size="sm"
-          className="mt-4"
-          disabled={!game.downloadUrl}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Install
-        </Button>
-      </div>
-    </div>
+      <CardContent className="flex items-center gap-4 p-4">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
+          <Image
+            src={game.coverImage}
+            alt={game.title}
+            width={64}
+            height={64}
+            className="object-cover"
+          />
+        </div>
+        <div className="flex-1 space-y-1">
+          <h3 className="font-semibold text-foreground">{game.title}</h3>
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {game.featuredDescription}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
