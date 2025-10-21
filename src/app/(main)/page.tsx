@@ -29,6 +29,8 @@ interface PublishedGame {
   gameName: string;
   iconUrl: string;
   downloadUrl: string;
+  description: string;
+  averageRating: number;
   [key: string]: any;
 }
 
@@ -54,10 +56,11 @@ function HomePageComponent() {
             platform: 'Android', 
             price: 0, 
             genre: 'User Published', 
-            description: 'A user published game.',
+            description: pg.description || 'A user published game.',
             coverImage: pg.iconUrl,
             imageHint: 'user game',
             downloadUrl: pg.downloadUrl,
+            averageRating: pg.averageRating
         }));
 
         return transformedGames;

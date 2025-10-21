@@ -10,4 +10,5 @@ export type Game = {
   coverImage: ImagePlaceholder['imageUrl'];
   imageHint: ImagePlaceholder['imageHint'];
   downloadUrl?: string;
+  averageRating?: number;
 };
