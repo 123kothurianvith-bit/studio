@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState } from 'react';
 import { useFirestore, useUser, FirebaseClientProvider } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
-import { addDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { addDocumentNonBlocking } from '@/firebase';
 
 const formSchema = z.object({
   gameName: z.string().min(2, { message: 'Game name must be at least 2 characters.' }),
@@ -48,7 +48,7 @@ function PublishComponent() {
     },
   });
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     if (!firestore || !user) {
       toast({
         title: 'Authentication Error',
@@ -68,10 +68,10 @@ function PublishComponent() {
         downloads: 0,
         averageRating: 0,
         ratings: [],
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       };
 
-      addDocumentNonBlocking(gamesCollection, newGameData);
+      await addDoc(gamesCollection, newGameData);
       
       toast({
         title: 'Game Published!',
