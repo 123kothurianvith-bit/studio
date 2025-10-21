@@ -39,7 +39,7 @@ export default function GameCard({ game }: GameCardProps) {
   };
 
   return (
-    <Card onClick={handleCardClick} className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg flex flex-col">
+    <Card onClick={handleCardClick} className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg flex flex-col bg-card hover:bg-accent">
       <CardContent className="flex-1 p-4 flex flex-col gap-4">
         <div className="flex items-start gap-4">
             <div className="relative aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
