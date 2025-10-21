@@ -43,8 +43,8 @@ export default function GameCard({ game }: GameCardProps) {
           <Image
             src={game.coverImage}
             alt={game.title}
-            fill
-            sizes="64px"
+            width={64}
+            height={64}
             className="object-cover"
             data-ai-hint={game.imageHint}
           />
