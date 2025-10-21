@@ -11,6 +11,7 @@ import { Loader2, Gamepad, Frown, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import GameCard from '@/components/game-card';
 import type { Game } from '@/lib/types';
+import { useMemo } from 'react';
 
 
 interface DeveloperProfile {
