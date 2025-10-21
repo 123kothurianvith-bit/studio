@@ -1,8 +1,15 @@
-import React, { Suspense } from 'react';
+'use client';
+
+import React, { Suspense, useMemo } from 'react';
 import GameBrowser from '@/components/game-browser';
-import { games } from '@/lib/data';
+import { games as staticGames } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import GameSearch from '@/components/game-search';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Game } from '@/lib/types';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 function GameBrowserLoader() {
   return (
@@ -18,14 +25,58 @@ function GameBrowserLoader() {
   );
 }
 
+interface PublishedGame {
+  id: string;
+  gameName: string;
+  iconUrl: string;
+  [key: string]: any;
+}
 
-export default function HomePage() {
+
+function HomePageComponent() {
+    const firestore = useFirestore();
+
+    const publishedGamesQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return collection(firestore, 'publishedGames');
+    }, [firestore]);
+
+    const { data: publishedGames, isLoading } = useCollection<PublishedGame>(publishedGamesQuery);
+
+    const allGames = useMemo(() => {
+        if (!publishedGames) {
+            return staticGames;
+        }
+
+        const transformedGames: Game[] = publishedGames.map(pg => ({
+            id: pg.id,
+            title: pg.gameName,
+            platform: 'PC', // Default platform
+            price: 0, // Default price
+            genre: 'Adventure', // Default genre
+            description: 'A user published game.', // Default description
+            coverImage: pg.iconUrl,
+            imageHint: 'user game',
+        }));
+
+        return [...staticGames, ...transformedGames];
+    }, [publishedGames]);
+
   return (
     <div className="space-y-6">
       <GameSearch />
       <Suspense fallback={<GameBrowserLoader />}>
-        <GameBrowser allGames={games} />
+        <GameBrowser allGames={allGames} />
       </Suspense>
     </div>
   );
+}
+
+
+export default function HomePage() {
+  return (
+    <FirebaseClientProvider>
+      <HomePageComponent />
+    </FirebaseClientProvider>
+  )
 }
