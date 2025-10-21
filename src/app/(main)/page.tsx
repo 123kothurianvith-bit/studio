@@ -115,7 +115,7 @@ function HomePageComponent() {
         const featured = allGames.filter(g => g.isFeatured && g.featuredDescription);
         const popular = [...allGames].sort((a, b) => (b.downloads || 0) - (a.downloads || 0)).slice(0, 5);
 
-        return { featuredGames, popularGames };
+        return { featuredGames: featured, popularGames: popular };
     }, [allGames, publishedGames]);
 
   if (searchQuery) {
