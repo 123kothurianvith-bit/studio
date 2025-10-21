@@ -93,6 +93,65 @@
         "id",
         "userAccountId"
       ]
+    },
+    "PublishedGame": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PublishedGame",
+      "type": "object",
+      "description": "Represents a game published by a developer on the platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the published game."
+        },
+        "publisherId": {
+          "type": "string",
+          "description": "The UID of the user who published the game."
+        },
+        "gameName": {
+          "type": "string",
+          "description": "The name of the game."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "URL for the game's icon."
+        },
+        "downloadUrl": {
+          "type": "string",
+          "description": "URL for downloading the game."
+        },
+        "downloads": {
+          "type": "number",
+          "description": "The number of times the game has been downloaded."
+        },
+        "averageRating": {
+          "type": "number",
+          "description": "The average user rating for the game (0-5)."
+        },
+        "ratings": {
+          "type": "array",
+          "description": "An array of individual rating objects.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "userId": { "type": "string" },
+              "rating": { "type": "number" }
+            }
+          }
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when the game was published."
+        }
+      },
+      "required": [
+        "id",
+        "publisherId",
+        "gameName",
+        "iconUrl",
+        "downloadUrl"
+      ]
     }
   },
   "auth": {
@@ -153,8 +212,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/publishedGames/{gameId}",
+        "definition": {
+          "entityName": "PublishedGame",
+          "schema": {
+            "$ref": "#/backend/entities/PublishedGame"
+          },
+          "description": "Stores games published by developers. Write access is restricted to the owning publisher, while read access can be public.",
+          "params": [
+            {
+              "name": "gameId",
+              "description": "The unique identifier for the published game."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability, following the specified design principles. User accounts are stored in `/users/{userId}`, with wishlists as subcollections.  This structure avoids hierarchical authorization dependencies by relying solely on `request.auth.uid` and path-based ownership for user-specific data. Games are stored in a top-level `/games` collection. Authorization Independence is achieved since there is no need for `get()` calls to check parent document data, as ownership is implied by the path for user-owned resources. The structure supports the required QAPs by segregating data based on access needs (private user data under `/users/{userId}` and public game data under `/games`)."
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability, following the specified design principles. User accounts are stored in `/users/{userId}`, with wishlists as subcollections.  This structure avoids hierarchical authorization dependencies by relying solely on `request.auth.uid` and path-based ownership for user-specific data. Games are stored in a top-level `/games` collection. A new top-level collection `/publishedGames` is added for developer-published content, with publisher ownership enforced through security rules. Authorization Independence is achieved since there is no need for `get()` calls to check parent document data, as ownership is implied by the path for user-owned resources. The structure supports the required QAPs by segregating data based on access needs."
   }
 }

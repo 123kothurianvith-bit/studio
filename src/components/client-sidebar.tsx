@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -23,6 +24,8 @@ import {
   BrainCircuit,
   Compass,
   Trophy,
+  Upload,
+  BarChart2,
 } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -116,9 +119,40 @@ export default function ClientSidebar({
           </SidebarMenu>
         </SidebarGroup>
         <SidebarSeparator />
+         <SidebarGroup>
+           <SidebarGroupLabel>Developer</SidebarGroupLabel>
+           <SidebarMenu>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/publish'}>
+                  <Link href="/publish">
+                    <Upload />
+                    <span>Publish Game</span>
+                  </Link>
+                </SidebarMenuButton>
+             </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/my-apps'}>
+                  <Link href="/my-apps">
+                    <Gamepad />
+                    <span>My Apps</span>
+                  </Link>
+                </SidebarMenuButton>
+             </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/analytics'}>
+                  <Link href="/analytics">
+                    <BarChart2 />
+                    <span>Analytics</span>
+                  </Link>
+                </SidebarMenuButton>
+             </SidebarMenuItem>
+           </SidebarMenu>
+        </SidebarGroup>
+        <SidebarSeparator />
         <SidebarGroup>
           <SidebarGroupLabel>Filters</SidebarGroupLabel>
           <div className="space-y-6 px-2">
+
             <div className="space-y-2">
               <Label htmlFor="platform-filter">Platform</Label>
               <Select
