@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc, updateDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Gamepad, Loader2, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { generateAppIcon } from '@/ai/flows/generate-app-icon';
 
 interface PublishedGame {
   id: string;
   gameName: string;
-  iconUrl: string;
+  iconUrl?: string;
   downloads: number;
   averageRating: number;
+  genre: 'Action' | 'RPG' | 'Strategy' | 'Adventure' | 'Sports';
 }
 
 function MyAppsComponent() {
@@ -38,6 +40,26 @@ function MyAppsComponent() {
   }, [firestore, user]);
 
   const { data: games, isLoading } = useCollection<PublishedGame>(publishedGamesQuery);
+
+  useEffect(() => {
+    if (games && firestore) {
+      games.forEach(async (game) => {
+        if (!game.iconUrl) {
+          console.log(`Generating icon for ${game.gameName}...`);
+          try {
+            const iconResult = await generateAppIcon({ name: game.gameName, genre: game.genre });
+            if (iconResult.iconUrl) {
+              const gameDocRef = doc(firestore, 'publishedGames', game.id);
+              await updateDoc(gameDocRef, { iconUrl: iconResult.iconUrl });
+              console.log(`Icon generated and saved for ${game.gameName}.`);
+            }
+          } catch (error) {
+            console.error(`Failed to generate icon for ${game.gameName}:`, error);
+          }
+        }
+      });
+    }
+  }, [games, firestore]);
 
   if (isLoading || isUserLoading) {
     return (
@@ -99,7 +121,9 @@ function MyAppsComponent() {
                     {game.iconUrl ? (
                       <Image src={game.iconUrl} alt={`${game.gameName} icon`} fill className="object-cover" />
                     ) : (
-                      <Gamepad className="h-16 w-16 text-muted-foreground" />
+                      <div className="flex h-full w-full items-center justify-center bg-secondary">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      </div>
                     )}
                   </div>
                   <div className='mt-2'>
@@ -125,5 +149,3 @@ export default function MyAppsPage() {
         </FirebaseClientProvider>
     )
 }
-
-    
