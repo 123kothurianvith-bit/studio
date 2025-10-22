@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Upload, Gamepad, BarChart2, User as UserIcon, LogOut, Home } from 'lucide-react';
+import { Upload, Gamepad, BarChart2, User as UserIcon, LogOut, Home, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useAuth } from '@/firebase';
 import {
@@ -15,11 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
-
 
 const allNavItems = [
   { href: '/', icon: Home, label: 'Browse', roles: ['user', 'developer'] },
+  { href: '/wishlist', icon: Heart, label: 'Wishlist', roles: ['user', 'developer'] },
   { href: '/publish', icon: Upload, label: 'Publish', roles: ['developer'] },
   { href: '/my-apps', icon: Gamepad, label: 'My Apps', roles: ['developer'] },
   { href: '/analytics', icon: BarChart2, label: 'Analytics', roles: ['developer'] },
@@ -34,7 +33,6 @@ export default function BottomNavBar() {
   const userRole = user?.profile?.role || 'user';
 
   const navItems = allNavItems.filter(item => item.roles.includes(userRole));
-
 
   const handleSignOut = async () => {
     if (auth) {
