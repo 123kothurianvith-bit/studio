@@ -7,8 +7,9 @@ import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Card } from './ui/card';
-import { Star } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWishlist } from '@/contexts/wishlist-context';
 
 
 const gradients = [
@@ -33,6 +34,8 @@ type FeaturedGameCardProps = {
 export default function FeaturedGameCard({ game, index }: FeaturedGameCardProps) {
   const firestore = useFirestore();
   const router = useRouter();
+  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
+  const wishlisted = isWishlisted(game.id);
 
   const handleInstallClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -48,6 +51,15 @@ export default function FeaturedGameCard({ game, index }: FeaturedGameCardProps)
   const handleCardClick = () => {
     router.push(`/game/${game.id}`);
   };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (wishlisted) {
+        removeFromWishlist(game.id);
+    } else {
+        addToWishlist(game.id);
+    }
+  }
   
   const cardGradient = getGradientForCard(index);
 
@@ -57,10 +69,18 @@ export default function FeaturedGameCard({ game, index }: FeaturedGameCardProps)
       className={cn("group w-full cursor-pointer overflow-hidden rounded-2xl border-0 shadow-lg transition-all bg-gradient-to-br", cardGradient)}
     >
       <div className="relative flex aspect-[16/9] w-full flex-col justify-between p-4">
-        <div className="flex-1">
-           <h3 className="text-xl font-bold text-white drop-shadow-md">
+        <div className="flex justify-between">
+           <h3 className="text-xl font-bold text-white drop-shadow-md flex-1">
                 {game.featuredDescription}
             </h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 rounded-full text-white/80 hover:bg-white/20 hover:text-white"
+              onClick={handleWishlistToggle}
+            >
+              <Heart className={cn("h-5 w-5", wishlisted && "fill-red-500 text-red-500")} />
+            </Button>
         </div>
         <div className="flex items-center justify-between gap-4">
             <div className="flex-1 overflow-hidden">

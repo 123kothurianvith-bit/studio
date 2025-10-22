@@ -3,7 +3,7 @@
 
 import type { Game } from '@/lib/types';
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/button';
 import { useFirestore } from '@/firebase';
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { Card } from './ui/card';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useWishlist } from '@/contexts/wishlist-context';
 
 type GameCardProps = {
   game: Game;
@@ -36,6 +37,8 @@ const getGradientForCard = (index: number) => {
 export default function GameCard({ game, variant = 'default', index = 0 }: GameCardProps) {
   const router = useRouter();
   const firestore = useFirestore();
+  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
+  const wishlisted = isWishlisted(game.id);
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('a, button')) {
@@ -55,6 +58,15 @@ export default function GameCard({ game, variant = 'default', index = 0 }: GameC
       });
     }
   };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (wishlisted) {
+        removeFromWishlist(game.id);
+    } else {
+        addToWishlist(game.id);
+    }
+  }
   
   const placeholderImage = PlaceHolderImages.find(p => p.imageHint.includes(game.imageHint))?.imageUrl || 'https://picsum.photos/seed/1/600/400';
   const cardGradient = getGradientForCard(index);
@@ -70,6 +82,14 @@ export default function GameCard({ game, variant = 'default', index = 0 }: GameC
               className="object-cover"
               data-ai-hint={game.imageHint}
               />
+               <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-1 right-1 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50 hover:text-white"
+                onClick={handleWishlistToggle}
+               >
+                <Heart className={cn("h-4 w-4", wishlisted && "fill-red-500 text-red-500")} />
+              </Button>
           </div>
           <div className="p-2">
             <h3 className="truncate text-sm font-medium text-foreground">{game.title}</h3>
@@ -108,6 +128,14 @@ export default function GameCard({ game, variant = 'default', index = 0 }: GameC
             {game.averageRating ? <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> : null}
         </div>
       </div>
+       <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 shrink-0 rounded-full text-white/80 hover:bg-white/20 hover:text-white"
+        onClick={handleWishlistToggle}
+      >
+        <Heart className={cn("h-5 w-5", wishlisted && "fill-red-500 text-red-500")} />
+      </Button>
       <Button 
         onClick={handleInstallClick} 
         size="sm" 
