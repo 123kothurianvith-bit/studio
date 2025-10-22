@@ -46,7 +46,7 @@ export default function BottomNavBar() {
   }
 
   return (
-    <nav className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 backdrop-blur-sm md:hidden">
+    <nav className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-md items-center justify-around px-4">
         {navItems.map((item) => (
           <Link
