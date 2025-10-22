@@ -163,7 +163,7 @@ function GameDetailPageComponent() {
       </header>
 
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-        <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl}>
+        <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl} variant="default">
           <Download className="mr-2 h-5 w-5" />
           Install
         </Button>

@@ -140,7 +140,7 @@ export default function GameCard({ game, variant = 'default', index = 0 }: GameC
         onClick={handleInstallClick} 
         size="sm" 
         disabled={!game.downloadUrl} 
-        className="shrink-0 rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200"
+        className="shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
       >
         Install
       </Button>
