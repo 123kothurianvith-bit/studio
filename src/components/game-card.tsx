@@ -10,6 +10,8 @@ import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { Card } from './ui/card';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 type GameCardProps = {
   game: Game;
@@ -38,12 +40,20 @@ export default function GameCard({ game, variant = 'default' }: GameCardProps) {
       });
     }
   };
+  
+  const placeholderImage = PlaceHolderImages.find(p => p.imageHint.includes(game.imageHint))?.imageUrl || 'https://picsum.photos/seed/1/600/400';
 
   if (variant === 'compact') {
       return (
         <Card onClick={handleCardClick} className="group w-full cursor-pointer overflow-hidden rounded-lg">
-          <div className="aspect-[3/4] w-full bg-muted">
-            {/* Placeholder for game image */}
+           <div className="aspect-[3/4] w-full bg-muted relative">
+            <Image
+              src={placeholderImage}
+              alt={`Cover art for ${game.title}`}
+              fill
+              className="object-cover"
+              data-ai-hint={game.imageHint}
+              />
           </div>
           <div className="p-2">
             <h3 className="truncate text-sm font-medium text-foreground">{game.title}</h3>
@@ -58,6 +68,15 @@ export default function GameCard({ game, variant = 'default' }: GameCardProps) {
 
   return (
     <div onClick={handleCardClick} className="group flex w-full cursor-pointer items-center gap-4 transition-colors hover:bg-accent/50 rounded-lg p-2">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+            <Image
+                src={placeholderImage}
+                alt={`Cover art for ${game.title}`}
+                fill
+                className="object-cover"
+                data-ai-hint={game.imageHint}
+            />
+        </div>
         <div className="flex-1">
           <h3 className="truncate font-medium text-foreground">{game.title}</h3>
             {game.developerName && game.publisherId ? (

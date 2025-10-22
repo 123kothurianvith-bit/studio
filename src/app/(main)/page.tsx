@@ -20,10 +20,15 @@ import { recommendGames } from '@/ai/flows/recommend-games';
 
 function GameBrowserLoader() {
   return (
-    <div className="space-y-4 px-4">
+    <div className="flex flex-col gap-4 px-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex items-center space-x-4">
-          <Skeleton className="h-10 w-3/4" />
+        <div key={i} className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
           <Skeleton className="h-10 w-24 rounded-full" />
         </div>
       ))}
@@ -175,7 +180,7 @@ function HomePageComponent() {
            <div className="flex flex-col gap-4 px-4">
             {filteredGames.map((game) => <GameCard key={game.id} game={game} />)}
            </div>
-        ) : (
+        ) : !isLoading && filteredGames.length === 0 ? (
             <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <Frown className="h-8 w-8 text-primary" />
@@ -185,7 +190,7 @@ function HomePageComponent() {
                 Try adjusting your search or filter criteria, or publish a new game!
             </p>
         </div>
-        )}
+        ) : null}
       </div>
 
       {!searchQuery && recommendedGames.length > 0 && (
