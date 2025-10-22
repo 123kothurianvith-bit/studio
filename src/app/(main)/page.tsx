@@ -4,15 +4,14 @@
 import React, { Suspense, useMemo, useRef, useState, useEffect } from 'react';
 import GameCard from '@/components/game-card';
 import { Skeleton } from '@/components/ui/skeleton';
-import GameSearch from '@/components/game-search';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import type { Game } from '@/lib/types';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { Frown, Gamepad, Bot } from 'lucide-react';
+import { Frown, Bot } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Autoplay from "embla-carousel-autoplay";
 import { recommendGames } from '@/ai/flows/recommend-games';
@@ -23,13 +22,7 @@ function GameBrowserLoader() {
     <div className="flex flex-col gap-4 px-4">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-lg" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-4 w-1/4" />
-          </div>
-          <Skeleton className="h-10 w-24 rounded-full" />
+          <Skeleton className="h-16 w-full rounded-lg" />
         </div>
       ))}
     </div>
@@ -178,7 +171,7 @@ function HomePageComponent() {
             <GameBrowserLoader />
         ) : filteredGames.length > 0 ? (
            <div className="flex flex-col gap-4 px-4">
-            {filteredGames.map((game) => <GameCard key={game.id} game={game} />)}
+            {filteredGames.map((game, index) => <GameCard key={game.id} game={game} index={index} />)}
            </div>
         ) : !isLoading && filteredGames.length === 0 ? (
             <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
@@ -215,7 +208,7 @@ function HomePageComponent() {
                 <CarouselContent className="-ml-2">
                     {popularGames.map((game, index) => (
                         <CarouselItem key={`${game.id}-${index}`} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
-                           <GameCard key={game.id} game={game} />
+                           <GameCard key={game.id} game={game} index={index}/>
                         </CarouselItem>
                     ))}
                 </CarouselContent>

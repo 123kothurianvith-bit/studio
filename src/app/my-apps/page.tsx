@@ -5,7 +5,7 @@ import { useMemo, useEffect, useState } from 'react';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { collection, query, where, doc, updateDoc } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Gamepad, Loader2, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -19,21 +19,8 @@ interface PublishedGame {
   downloads: number;
   averageRating: number;
   genre: 'Action' | 'RPG' | 'Strategy' | 'Adventure' | 'Sports';
+  iconUrl?: string;
 }
-
-const gradients = [
-    'from-pink-500 to-purple-600',
-    'from-emerald-400 to-cyan-600',
-    'from-amber-400 to-orange-600',
-    'from-rose-400 to-fuchsia-600',
-    'from-indigo-500 to-sky-600',
-    'from-red-500 to-yellow-500',
-    'from-green-400 to-blue-500',
-];
-
-const getGradientForCard = (index: number) => {
-    return gradients[index % gradients.length];
-};
 
 function MyAppsComponent() {
   const firestore = useFirestore();
@@ -105,17 +92,18 @@ function MyAppsComponent() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {games.map((game, index) => (
+        {games.map((game) => (
           <Link href={`/game/${game.id}`} key={game.id}>
-            <Card className={cn("group overflow-hidden rounded-xl border-0 shadow-lg transition-all hover:scale-105 bg-gradient-to-br", getGradientForCard(index))}>
-              <CardContent className="p-4 flex flex-col justify-end aspect-square">
-                  <div className='text-white'>
-                    <CardTitle className="truncate text-lg drop-shadow-md">{game.gameName}</CardTitle>
-                    <div className="mt-1 flex justify-between text-sm text-white/90">
-                      <span>{game.downloads.toLocaleString()} dl</span>
-                      <span>{game.averageRating.toFixed(1)} ★</span>
-                    </div>
-                  </div>
+            <Card className="group overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:scale-105">
+              <CardHeader>
+                <CardTitle className="truncate">{game.gameName}</CardTitle>
+                <CardDescription>{game.genre}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>{game.downloads.toLocaleString()} downloads</span>
+                  <span>{game.averageRating.toFixed(1)} ★</span>
+                </div>
               </CardContent>
             </Card>
           </Link>
