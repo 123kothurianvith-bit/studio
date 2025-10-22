@@ -108,10 +108,7 @@ function MyAppsComponent() {
         {games.map((game, index) => (
           <Link href={`/game/${game.id}`} key={game.id}>
             <Card className={cn("group overflow-hidden rounded-xl border-0 shadow-lg transition-all hover:scale-105 bg-gradient-to-br", getGradientForCard(index))}>
-              <CardContent className="p-4 flex flex-col justify-between aspect-square">
-                  <div className='flex-1 flex items-center justify-center'>
-                    <Gamepad className="h-16 w-16 text-white/80" />
-                  </div>
+              <CardContent className="p-4 flex flex-col justify-end aspect-square">
                   <div className='text-white'>
                     <CardTitle className="truncate text-lg drop-shadow-md">{game.gameName}</CardTitle>
                     <div className="mt-1 flex justify-between text-sm text-white/90">
@@ -135,5 +132,3 @@ export default function MyAppsPage() {
         </FirebaseClientProvider>
     )
 }
-
-    
