@@ -224,11 +224,7 @@ function HomePageComponent() {
 export default function HomePage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <FirebaseClientProvider>
-        <div className="flex-1 overflow-y-auto">
-          <HomePageComponent />
-        </div>
-      </FirebaseClientProvider>
+      <HomePageComponent />
     </Suspense>
   )
 }
