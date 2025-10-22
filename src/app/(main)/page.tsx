@@ -8,7 +8,6 @@ import { useCollection } from '@/firebase/firestore/use-collection';
 import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Game } from '@/lib/types';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { Frown, Bot } from 'lucide-react';
@@ -103,44 +102,6 @@ function HomePageComponent() {
 
         return { featuredGames: featured, popularGames: popular };
     }, [allGames, publishedGames]);
-
-     useEffect(() => {
-        if (user && user.profile && allGames.length > 0 && !searchQuery) {
-            const getRecommendations = async () => {
-                setIsRecommending(true);
-                try {
-                    const wishlistedGames = allGames.filter(g => user.profile.wishlistIds?.includes(g.id));
-                    const followedDeveloperNames = user.profile.followingDeveloperIds || []; // Assuming this will be populated
-                    
-                    // For now, let's find the names from the games list
-                    const developerNames = allGames.filter(g => followedDeveloperNames.includes(g.publisherId || ''))
-                                                    .map(g => g.developerName)
-                                                    .filter((value, index, self) => self.indexOf(value) === index);
-
-
-                    const result = await recommendGames({
-                        allGames: allGames.map(g => ({ id: g.id, gameName: g.title, description: g.description, genre: g.genre, developerName: g.developerName || '' })),
-                        wishlistedGames: wishlistedGames.map(g => ({ id: g.id, gameName: g.title, description: g.description, genre: g.genre, developerName: g.developerName || '' })),
-                        followedDevelopers: developerNames,
-                        count: 10,
-                    });
-
-                    if (result.recommendedGameIds) {
-                        const recommended = allGames.filter(g => result.recommendedGameIds.includes(g.id));
-                        setRecommendedGames(recommended);
-                    }
-                } catch (error) {
-                    console.error("Failed to get recommendations:", error);
-                } finally {
-                    setIsRecommending(false);
-                }
-            };
-
-            getRecommendations();
-        } else {
-            setRecommendedGames([]);
-        }
-    }, [user, allGames, searchQuery]);
 
   return (
     <div className="space-y-8 pb-8">
