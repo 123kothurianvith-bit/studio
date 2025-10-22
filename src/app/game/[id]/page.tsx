@@ -4,7 +4,7 @@
 import { useParams } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,6 +27,7 @@ interface PublishedGame {
   ratings: { userId: string; rating: number }[];
   createdAt: any;
   whatsNew?: string;
+  whatsNewSummary?: string;
 }
 
 function StarRating({ currentRating, onRate, disabled }: { currentRating: number, onRate: (rating: number) => void, disabled: boolean }) {
@@ -123,13 +124,11 @@ function GameDetailPageComponent() {
   };
 
   const handleInstallClick = () => {
-    if (game?.downloadUrl) {
+    if (game?.downloadUrl && gameDocRef) {
       window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
-      if (gameDocRef) {
-        updateDoc(gameDocRef, {
-            downloads: (game.downloads || 0) + 1
-        });
-      }
+      updateDoc(gameDocRef, {
+          downloads: (game.downloads || 0) + 1
+      });
     }
   };
   
@@ -180,11 +179,12 @@ function GameDetailPageComponent() {
 
       <Separator />
 
-      {game.whatsNew && (
+      {(game.whatsNew || game.whatsNewSummary) && (
         <>
           <Card>
             <CardHeader>
               <CardTitle>What's New</CardTitle>
+              {game.whatsNewSummary && <CardDescription>{game.whatsNewSummary}</CardDescription>}
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-muted-foreground">{game.whatsNew}</p>

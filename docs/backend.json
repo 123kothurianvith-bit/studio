@@ -30,6 +30,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "followingDeveloperIds": {
+          "type": "array",
+          "description": "A list of developer IDs that the user is following.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -138,6 +145,10 @@
           "type": "string",
           "description": "Notes about the latest update for the game."
         },
+        "whatsNewSummary": {
+          "type": "string",
+          "description": "An AI-generated summary of the 'What's New' section."
+        },
         "downloads": {
           "type": "number",
           "description": "The number of times the game has been downloaded."
@@ -200,6 +211,10 @@
         "gameCount": {
           "type": "number",
           "description": "The total number of games published by the developer."
+        },
+        "followerCount": {
+          "type": "number",
+          "description": "The number of users following this developer."
         }
       },
       "required": [
@@ -291,7 +306,7 @@
           "schema": {
             "$ref": "#/backend/entities/DeveloperProfile"
           },
-          "description": "Stores public developer profiles. Read access is public, write access is restricted to the developer.",
+          "description": "Stores public developer profiles. Read access is public, write access is restricted to the developer. It includes a follower count.",
           "params": [
             {
               "name": "developerId",

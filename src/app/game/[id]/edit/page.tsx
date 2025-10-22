@@ -13,10 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { summarizeWhatsNew } from '@/ai/flows/summarize-whats-new';
 
 interface PublishedGame {
   id: string;
@@ -25,12 +26,14 @@ interface PublishedGame {
   description: string;
   publisherId: string;
   whatsNew?: string;
+  whatsNewSummary?: string;
 }
 
 const formSchema = z.object({
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   whatsNew: z.string().optional(),
+  whatsNewSummary: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,6 +46,7 @@ function EditGameComponent() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const gameDocRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -57,6 +61,7 @@ function EditGameComponent() {
       downloadUrl: '',
       description: '',
       whatsNew: '',
+      whatsNewSummary: '',
     },
   });
   
@@ -66,9 +71,36 @@ function EditGameComponent() {
         downloadUrl: game.downloadUrl,
         description: game.description,
         whatsNew: game.whatsNew || '',
+        whatsNewSummary: game.whatsNewSummary || '',
       });
     }
   }, [game, form]);
+
+  async function handleGenerateSummary() {
+    const whatsNewText = form.getValues('whatsNew');
+    if (!whatsNewText || whatsNewText.length < 10) {
+      toast({
+        title: "Text is too short",
+        description: "Please write a more detailed 'What's New' before generating a summary.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const result = await summarizeWhatsNew({ whatsNewText });
+      if (result.summary) {
+        form.setValue("whatsNewSummary", result.summary, { shouldValidate: true });
+        toast({ title: "Summary Generated!" });
+      }
+    } catch (error) {
+      console.error("Failed to generate summary:", error);
+      toast({ title: "Generation Failed", variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     if (!gameDocRef) return;
@@ -168,6 +200,25 @@ function EditGameComponent() {
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                          control={form.control}
+                          name="whatsNewSummary"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>What's New Summary (AI)</FormLabel>
+                                <Button type="button" size="sm" onClick={handleGenerateSummary} disabled={isGenerating}>
+                                  {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                  Generate
+                                </Button>
+                              </div>
+                              <FormControl>
+                                <Input {...field} placeholder="AI-generated summary will appear here..." />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <Button type="submit" disabled={isSubmitting} className="w-full">
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Changes
@@ -188,5 +239,3 @@ export default function EditGamePage() {
         </FirebaseClientProvider>
     )
 }
-
-    

@@ -4,19 +4,22 @@
 import { useParams } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useFirestore, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
-import { doc, collection, query, where } from 'firebase/firestore';
+import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
+import { doc, collection, query, where, updateDoc, arrayUnion, arrayRemove, runTransaction, increment } from 'firebase/firestore';
 import Link from 'next/link';
-import { Loader2, Frown, User } from 'lucide-react';
+import { Loader2, Frown, User as UserIcon, Rss } from 'lucide-react';
 import GameCard from '@/components/game-card';
-import type { Game } from '@/lib/types';
-import { useMemo } from 'react';
+import type { Game, UserAccount } from '@/lib/types';
+import { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface DeveloperProfile {
   id: string;
   developerName: string;
   gameCount: number;
+  followerCount: number;
 }
 
 interface PublishedGame {
@@ -34,6 +37,10 @@ function DeveloperProfilePageComponent() {
   const params = useParams();
   const developerId = params.id as string;
   const firestore = useFirestore();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   const developerDocRef = useMemoFirebase(() => {
     if (!firestore || !developerId) return null;
@@ -47,6 +54,67 @@ function DeveloperProfilePageComponent() {
 
   const { data: developer, isLoading: isLoadingDeveloper } = useDoc<DeveloperProfile>(developerDocRef);
   const { data: publishedGames, isLoading: isLoadingGames } = useCollection<PublishedGame>(publishedGamesQuery);
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userAccount } = useDoc<UserAccount>(userDocRef);
+
+  useEffect(() => {
+    if (userAccount && developerId) {
+      setIsFollowing(userAccount.followingDeveloperIds?.includes(developerId) || false);
+    }
+  }, [userAccount, developerId]);
+
+
+  const handleFollowToggle = async () => {
+    if (!user || !firestore || !developerDocRef || !userDocRef) {
+      toast({ title: 'You must be logged in to follow developers.', variant: 'destructive'});
+      return;
+    }
+    
+    setIsFollowLoading(true);
+
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const devDoc = await transaction.get(developerDocRef);
+            if (!devDoc.exists()) {
+                throw new Error("Developer not found!");
+            }
+
+            if (isFollowing) {
+                // Unfollow
+                transaction.update(userDocRef, {
+                    followingDeveloperIds: arrayRemove(developerId)
+                });
+                transaction.update(developerDocRef, {
+                    followerCount: increment(-1)
+                });
+            } else {
+                // Follow
+                transaction.update(userDocRef, {
+                    followingDeveloperIds: arrayUnion(developerId)
+                });
+                transaction.update(developerDocRef, {
+                    followerCount: increment(1)
+                });
+            }
+        });
+        setIsFollowing(!isFollowing);
+        toast({
+            title: isFollowing ? 'Unfollowed!' : 'Followed!',
+            description: `You are no longer following ${developer?.developerName}.`
+        });
+    } catch (e) {
+        console.error(e);
+        toast({ title: "Something went wrong", description: "Could not update follow status.", variant: "destructive"})
+    } finally {
+        setIsFollowLoading(false);
+    }
+
+  }
 
   const allGames = useMemo(() => {
     if (!publishedGames) return [];
@@ -92,16 +160,24 @@ function DeveloperProfilePageComponent() {
 
   return (
     <div className="container mx-auto py-8">
-        <div className="mb-8 flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground sm:h-20 sm:w-20">
-                <User className="h-8 w-8 sm:h-10 sm:w-10" />
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground sm:h-20 sm:w-20">
+                    <UserIcon className="h-8 w-8 sm:h-10 sm:w-10" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
+                        {developer.developerName}
+                    </h1>
+                    <p className="text-muted-foreground">{(developer.followerCount || 0).toLocaleString()} followers &middot; {developer.gameCount} apps</p>
+                </div>
             </div>
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    {developer.developerName}
-                </h1>
-                 <p className="text-muted-foreground">{developer.gameCount} apps</p>
-            </div>
+            {user && user.uid !== developerId && (
+                <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
+                    {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Rss className="mr-2 h-4 w-4" />}
+                    {isFollowing ? 'Unfollow' : 'Follow'}
+                </Button>
+            )}
         </div>
 
         <div>
@@ -128,5 +204,3 @@ export default function DeveloperProfilePage() {
         </FirebaseClientProvider>
     )
 }
-
-    

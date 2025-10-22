@@ -4,11 +4,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useFirestore, useUser, FirebaseClientProvider, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { generateGameDescription } from '@/ai/flows/generate-game-description';
+import { summarizeWhatsNew } from '@/ai/flows/summarize-whats-new';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -40,12 +41,12 @@ const formSchema = z.object({
   downloadUrl: z.string().url({ message: 'Please enter a valid URL for the game download.' }),
   isFeatured: z.boolean().optional(),
   featuredDescription: z.string().optional(),
-  // AI fields
   genre: z.enum(['Action', 'RPG', 'Strategy', 'Adventure', 'Sports']),
   keyFeatures: z.string().min(10, { message: "Please list at least one key feature." }),
   targetAudience: z.string().min(3, { message: "Please describe the target audience." }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters long.'}),
   whatsNew: z.string().optional(),
+  whatsNewSummary: z.string().optional(),
 }).refine(data => {
     if (data.isFeatured && (!data.featuredDescription || data.featuredDescription.length < 10)) {
         return false;
@@ -61,7 +62,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 function PublishComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
@@ -71,7 +73,7 @@ function PublishComponent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       gameName: '',
-      developerName: '',
+      developerName: user?.profile?.developerName || '',
       downloadUrl: '',
       isFeatured: false,
       featuredDescription: '',
@@ -79,6 +81,7 @@ function PublishComponent() {
       targetAudience: "",
       description: "",
       whatsNew: "",
+      whatsNewSummary: "",
     },
   });
 
@@ -95,7 +98,7 @@ function PublishComponent() {
       return;
     }
 
-    setIsGenerating(true);
+    setIsGeneratingDesc(true);
     try {
       const result = await generateGameDescription({
         title: gameName,
@@ -119,7 +122,33 @@ function PublishComponent() {
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setIsGeneratingDesc(false);
+    }
+  }
+
+  async function handleGenerateSummary() {
+    const whatsNewText = form.getValues('whatsNew');
+    if (!whatsNewText || whatsNewText.length < 10) {
+      toast({
+        title: "Text is too short",
+        description: "Please write a more detailed 'What's New' before generating a summary.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingSummary(true);
+    try {
+      const result = await summarizeWhatsNew({ whatsNewText });
+      if (result.summary) {
+        form.setValue("whatsNewSummary", result.summary, { shouldValidate: true });
+        toast({ title: "Summary Generated!" });
+      }
+    } catch (error) {
+      console.error("Failed to generate summary:", error);
+      toast({ title: "Generation Failed", variant: "destructive" });
+    } finally {
+      setIsGeneratingSummary(false);
     }
   }
 
@@ -138,7 +167,6 @@ function PublishComponent() {
     const gamesCollectionRef = collection(firestore, 'publishedGames');
     const newGameRef = doc(gamesCollectionRef);
 
-    // Declare these variables outside the transaction scope
     let developerData;
     const gameData = {
         ...values,
@@ -154,15 +182,21 @@ function PublishComponent() {
     runTransaction(firestore, async (transaction) => {
         const devDoc = await transaction.get(developerRef);
 
-        developerData = {
-            developerName: values.developerName,
-            gameCount: (devDoc.exists() ? devDoc.data().gameCount : 0) + 1,
-        };
-
-        // 1. Create or update developer profile
-        transaction.set(developerRef, developerData, { merge: true });
+        if (devDoc.exists()) {
+             transaction.update(developerRef, {
+                gameCount: (devDoc.data().gameCount || 0) + 1,
+                developerName: values.developerName, // Also update name on new publish
+             });
+             developerData = { ...devDoc.data(), gameCount: (devDoc.data().gameCount || 0) + 1};
+        } else {
+            developerData = {
+                developerName: values.developerName,
+                gameCount: 1,
+                followerCount: 0,
+            };
+            transaction.set(developerRef, developerData);
+        }
         
-        // 2. Add the new game document
         transaction.set(newGameRef, gameData);
 
       }).then(() => {
@@ -174,7 +208,7 @@ function PublishComponent() {
       }).catch((error: any) => {
         const permissionError = new FirestorePermissionError({
           path: newGameRef.path, 
-          operation: 'write', // Transactions can be complex, 'write' is a safe generalization
+          operation: 'write',
           requestResourceData: {
             developerProfile: developerData,
             game: gameData,
@@ -375,8 +409,8 @@ function PublishComponent() {
                         <FormItem>
                           <div className="flex items-center justify-between">
                             <FormLabel>Game Description</FormLabel>
-                            <Button type="button" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}>
-                              {isGenerating ? (
+                            <Button type="button" size="sm" onClick={handleGenerateDescription} disabled={isGeneratingDesc}>
+                              {isGeneratingDesc ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               ) : (
                                 <Sparkles className="mr-2 h-4 w-4" />
@@ -407,6 +441,26 @@ function PublishComponent() {
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="whatsNewSummary"
+                        render={({ field }) => (
+                        <FormItem>
+                            <div className="flex items-center justify-between">
+                            <FormLabel>What's New Summary (AI)</FormLabel>
+                            <Button type="button" size="sm" onClick={handleGenerateSummary} disabled={isGeneratingSummary}>
+                                {isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                Generate
+                            </Button>
+                            </div>
+                            <FormControl>
+                            <Input placeholder="AI-generated summary will appear here..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
                         )}
                     />
 

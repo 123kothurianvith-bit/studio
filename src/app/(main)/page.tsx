@@ -6,15 +6,16 @@ import GameCard from '@/components/game-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import GameSearch from '@/components/game-search';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 import type { Game } from '@/lib/types';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import FeaturedGameCard from '@/components/featured-game-card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { Frown } from 'lucide-react';
+import { Frown, Gamepad, Bot } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Autoplay from "embla-carousel-autoplay";
+import { recommendGames } from '@/ai/flows/recommend-games';
 
 
 function GameBrowserLoader() {
@@ -41,15 +42,20 @@ interface PublishedGame {
   isFeatured?: boolean;
   featuredDescription?: string;
   downloads?: number;
+  genre: Game['genre'];
   [key: string]: any;
 }
 
 
 function HomePageComponent() {
     const firestore = useFirestore();
+    const { user } = useUser();
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('q');
     const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }))
+
+    const [recommendedGames, setRecommendedGames] = useState<Game[]>([]);
+    const [isRecommending, setIsRecommending] = useState(false);
 
     const publishedGamesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -65,7 +71,7 @@ function HomePageComponent() {
             title: pg.gameName,
             platform: 'Android', 
             price: 0, 
-            genre: 'User Published', 
+            genre: pg.genre || 'User Published', 
             description: pg.description || 'A user published game.',
             imageHint: 'user game',
             downloadUrl: pg.downloadUrl,
@@ -89,7 +95,6 @@ function HomePageComponent() {
         );
     }, [allGames, searchQuery]);
 
-
     const { featuredGames, popularGames } = useMemo(() => {
         if (!publishedGames) {
             return { featuredGames: [], popularGames: [] };
@@ -101,13 +106,49 @@ function HomePageComponent() {
         return { featuredGames: featured, popularGames: popular };
     }, [allGames, publishedGames]);
 
+     useEffect(() => {
+        if (user && user.profile && allGames.length > 0 && !searchQuery) {
+            const getRecommendations = async () => {
+                setIsRecommending(true);
+                try {
+                    const wishlistedGames = allGames.filter(g => user.profile.wishlistIds?.includes(g.id));
+                    const followedDeveloperNames = user.profile.followingDeveloperIds || []; // Assuming this will be populated
+                    
+                    // For now, let's find the names from the games list
+                    const developerNames = allGames.filter(g => followedDeveloperNames.includes(g.publisherId || ''))
+                                                    .map(g => g.developerName)
+                                                    .filter((value, index, self) => self.indexOf(value) === index);
+
+
+                    const result = await recommendGames({
+                        allGames: allGames.map(g => ({ id: g.id, gameName: g.title, description: g.description, genre: g.genre, developerName: g.developerName || '' })),
+                        wishlistedGames: wishlistedGames.map(g => ({ id: g.id, gameName: g.title, description: g.description, genre: g.genre, developerName: g.developerName || '' })),
+                        followedDevelopers: developerNames,
+                        count: 10,
+                    });
+
+                    if (result.recommendedGameIds) {
+                        const recommended = allGames.filter(g => result.recommendedGameIds.includes(g.id));
+                        setRecommendedGames(recommended);
+                    }
+                } catch (error) {
+                    console.error("Failed to get recommendations:", error);
+                } finally {
+                    setIsRecommending(false);
+                }
+            };
+
+            getRecommendations();
+        } else {
+            setRecommendedGames([]);
+        }
+    }, [user, allGames, searchQuery]);
+
   return (
     <div className="space-y-8 pb-8">
-      <GameSearch />
-
       {!searchQuery && featuredGames.length > 0 && (
           <div className="space-y-4">
-              <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
+              <h2 className="px-4 text-2xl font-bold tracking-tight">Featured</h2>
               <Carousel 
                   opts={{ loop: true }}
                   plugins={[plugin.current]}
@@ -127,32 +168,53 @@ function HomePageComponent() {
       )}
       
       <div className="space-y-4">
-        <h2 className="px-4 text-2xl font-bold tracking-tight">{searchQuery ? `Results for "${searchQuery}"` : "For you"}</h2>
-        <div className="flex flex-col gap-4 px-4">
-          {isLoading ? (
-             <GameBrowserLoader />
-          ) : filteredGames.length > 0 ? (
-            filteredGames.map((game) => <GameCard key={game.id} game={game} />)
-          ) : (
-             <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Frown className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground">No Games Found</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                    Try adjusting your search or filter criteria, or publish a new game!
-                </p>
+        <h2 className="px-4 text-2xl font-bold tracking-tight">{searchQuery ? `Results for "${searchQuery}"` : "All Games"}</h2>
+        {isLoading ? (
+            <GameBrowserLoader />
+        ) : filteredGames.length > 0 ? (
+           <div className="flex flex-col gap-4 px-4">
+            {filteredGames.map((game) => <GameCard key={game.id} game={game} />)}
+           </div>
+        ) : (
+            <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <Frown className="h-8 w-8 text-primary" />
             </div>
-          )}
+            <h3 className="text-xl font-semibold text-foreground">No Games Found</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+                Try adjusting your search or filter criteria, or publish a new game!
+            </p>
         </div>
+        )}
       </div>
+
+      {!searchQuery && recommendedGames.length > 0 && (
+        <div className="space-y-4">
+            <h2 className="px-4 text-2xl font-bold tracking-tight flex items-center gap-2"><Bot className="w-6 h-6" /> For You</h2>
+             <Carousel opts={{align: "start"}} className="w-full">
+                <CarouselContent className="-ml-2">
+                    {recommendedGames.map((game, index) => (
+                        <CarouselItem key={`${game.id}-${index}`} className="pl-4 basis-1/3 md:basis-1/4 lg:basis-1/5">
+                           <GameCard game={game} variant="compact" />
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+            </Carousel>
+        </div>
+      )}
 
       {!searchQuery && popularGames.length > 0 && (
         <div className="space-y-4">
             <h2 className="px-4 text-2xl font-bold tracking-tight">What's buzzing</h2>
-            <div className="flex flex-col gap-4 px-4">
-                {popularGames.map((game) => <GameCard key={game.id} game={game} />)}
-            </div>
+            <Carousel opts={{align: "start"}} className="w-full">
+                <CarouselContent className="-ml-2">
+                    {popularGames.map((game, index) => (
+                        <CarouselItem key={`${game.id}-${index}`} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                           <GameCard key={game.id} game={game} />
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+            </Carousel>
         </div>
       )}
 
@@ -165,7 +227,9 @@ export default function HomePage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <FirebaseClientProvider>
-        <HomePageComponent />
+        <div className="flex-1 overflow-y-auto">
+          <HomePageComponent />
+        </div>
       </FirebaseClientProvider>
     </Suspense>
   )

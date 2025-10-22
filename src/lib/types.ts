@@ -19,4 +19,10 @@ export type Game = {
   downloads?: number;
 };
 
-    
+export interface UserAccount {
+    role: 'user' | 'developer';
+    email: string;
+    wishlistIds?: string[];
+    followingDeveloperIds?: string[];
+    developerName?: string; // Storing public dev name here after first publish
+}
