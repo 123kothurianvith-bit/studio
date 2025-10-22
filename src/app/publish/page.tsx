@@ -10,6 +10,7 @@ import { collection, doc, runTransaction, serverTimestamp } from 'firebase/fires
 import { useRouter } from 'next/navigation';
 import { generateGameDescription } from '@/ai/flows/generate-game-description';
 import { summarizeWhatsNew } from '@/ai/flows/summarize-whats-new';
+import { generateAppIcon } from '@/ai/flows/generate-app-icon';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -168,44 +169,57 @@ function PublishComponent() {
     const newGameRef = doc(gamesCollectionRef);
 
     let developerData;
-    const gameData = {
-        ...values,
-        id: newGameRef.id,
-        publisherId: user.uid,
-        downloads: 0,
-        averageRating: 0,
-        ratings: [],
-        createdAt: serverTimestamp(),
-    };
+    let gameData;
 
+    try {
+        toast({ title: "Generating app icon...", description: "The AI is creating a unique icon for your game." });
+        const iconResult = await generateAppIcon({ name: values.gameName, genre: values.genre });
 
-    runTransaction(firestore, async (transaction) => {
-        const devDoc = await transaction.get(developerRef);
+        gameData = {
+            ...values,
+            id: newGameRef.id,
+            publisherId: user.uid,
+            iconUrl: iconResult.iconUrl,
+            downloads: 0,
+            averageRating: 0,
+            ratings: [],
+            createdAt: serverTimestamp(),
+        };
 
-        if (devDoc.exists()) {
-             transaction.update(developerRef, {
-                gameCount: (devDoc.data().gameCount || 0) + 1,
-                developerName: values.developerName, // Also update name on new publish
-             });
-             developerData = { ...devDoc.data(), gameCount: (devDoc.data().gameCount || 0) + 1};
-        } else {
-            developerData = {
-                developerName: values.developerName,
-                gameCount: 1,
-                followerCount: 0,
-            };
-            transaction.set(developerRef, developerData);
-        }
-        
-        transaction.set(newGameRef, gameData);
+        await runTransaction(firestore, async (transaction) => {
+            const devDoc = await transaction.get(developerRef);
 
-      }).then(() => {
+            if (devDoc.exists()) {
+                 transaction.update(developerRef, {
+                    gameCount: (devDoc.data().gameCount || 0) + 1,
+                    developerName: values.developerName, // Also update name on new publish
+                 });
+                 developerData = { ...devDoc.data(), gameCount: (devDoc.data().gameCount || 0) + 1};
+            } else {
+                developerData = {
+                    developerName: values.developerName,
+                    gameCount: 1,
+                    followerCount: 0,
+                };
+                transaction.set(developerRef, developerData);
+            }
+            
+            transaction.set(newGameRef, gameData);
+        });
+
         toast({
-          title: 'Game Published!',
-          description: `${values.gameName} is now live!`,
+            title: 'Game Published!',
+            description: `${values.gameName} is now live!`,
         });
         router.push('/my-apps');
-      }).catch((error: any) => {
+
+    } catch (error) {
+        console.error("Publishing failed:", error);
+        toast({
+            title: "Publishing Failed",
+            description: "Could not publish the game. Please try again.",
+            variant: "destructive"
+        });
         const permissionError = new FirestorePermissionError({
           path: newGameRef.path, 
           operation: 'write',
@@ -215,10 +229,9 @@ function PublishComponent() {
           }
         });
         errorEmitter.emit('permission-error', permissionError);
-
-      }).finally(() => {
+    } finally {
         setIsSubmitting(false);
-      });
+    }
   }
 
   if (isUserLoading) {
@@ -487,3 +500,5 @@ export default function PublishPage() {
         </FirebaseClientProvider>
     )
 }
+
+    
