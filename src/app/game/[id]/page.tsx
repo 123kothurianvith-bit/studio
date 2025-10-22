@@ -8,12 +8,13 @@ import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Star, Download, Edit } from 'lucide-react';
+import { Loader2, Star, Download, Edit, Heart } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { useWishlist } from '@/contexts/wishlist-context';
 
 interface PublishedGame {
   id: string;
@@ -65,6 +66,7 @@ function GameDetailPageComponent() {
   const { user } = useUser();
   const { toast } = useToast();
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
 
   const gameDocRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -72,6 +74,17 @@ function GameDetailPageComponent() {
   }, [firestore, id]);
 
   const { data: game, isLoading } = useDoc<PublishedGame>(gameDocRef);
+
+  const wishlisted = useMemo(() => game ? isWishlisted(game.id) : false, [game, isWishlisted]);
+
+  const handleWishlistToggle = () => {
+    if (!game) return;
+    if (wishlisted) {
+      removeFromWishlist(game.id);
+    } else {
+      addToWishlist(game.id);
+    }
+  };
 
   const userRating = game?.ratings.find(r => r.userId === user?.uid)?.rating || 0;
   
@@ -166,6 +179,10 @@ function GameDetailPageComponent() {
         <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl} variant="default">
           <Download className="mr-2 h-5 w-5" />
           Install
+        </Button>
+         <Button onClick={handleWishlistToggle} variant="outline" size="lg" className="w-full sm:w-auto">
+            <Heart className={cn("mr-2 h-5 w-5", wishlisted && "fill-red-500 text-red-500")} />
+            {wishlisted ? 'Wishlisted' : 'Wishlist'}
         </Button>
         {isPublisher && (
           <Button asChild variant="outline" className="w-full sm:w-auto" size="lg">
