@@ -12,16 +12,28 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { generateAppIcon } from '@/ai/flows/generate-app-icon';
 
 interface PublishedGame {
   id: string;
   gameName: string;
-  iconUrl?: string;
   downloads: number;
   averageRating: number;
   genre: 'Action' | 'RPG' | 'Strategy' | 'Adventure' | 'Sports';
 }
+
+const gradients = [
+    'from-pink-500 to-purple-600',
+    'from-emerald-400 to-cyan-600',
+    'from-amber-400 to-orange-600',
+    'from-rose-400 to-fuchsia-600',
+    'from-indigo-500 to-sky-600',
+    'from-red-500 to-yellow-500',
+    'from-green-400 to-blue-500',
+];
+
+const getGradientForCard = (index: number) => {
+    return gradients[index % gradients.length];
+};
 
 function MyAppsComponent() {
   const firestore = useFirestore();
@@ -40,26 +52,6 @@ function MyAppsComponent() {
   }, [firestore, user]);
 
   const { data: games, isLoading } = useCollection<PublishedGame>(publishedGamesQuery);
-
-  useEffect(() => {
-    if (games && firestore) {
-      games.forEach(async (game) => {
-        if (!game.iconUrl) {
-          console.log(`Generating icon for ${game.gameName}...`);
-          try {
-            const iconResult = await generateAppIcon({ name: game.gameName, genre: game.genre });
-            if (iconResult.iconUrl) {
-              const gameDocRef = doc(firestore, 'publishedGames', game.id);
-              await updateDoc(gameDocRef, { iconUrl: iconResult.iconUrl });
-              console.log(`Icon generated and saved for ${game.gameName}.`);
-            }
-          } catch (error) {
-            console.error(`Failed to generate icon for ${game.gameName}:`, error);
-          }
-        }
-      });
-    }
-  }, [games, firestore]);
 
   if (isLoading || isUserLoading) {
     return (
@@ -113,22 +105,16 @@ function MyAppsComponent() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {games.map((game) => (
+        {games.map((game, index) => (
           <Link href={`/game/${game.id}`} key={game.id}>
-            <Card className="group overflow-hidden rounded-xl border-0 shadow-lg transition-all hover:scale-105">
+            <Card className={cn("group overflow-hidden rounded-xl border-0 shadow-lg transition-all hover:scale-105 bg-gradient-to-br", getGradientForCard(index))}>
               <CardContent className="p-4 flex flex-col justify-between aspect-square">
-                  <div className='relative flex-1 flex items-center justify-center bg-muted rounded-lg overflow-hidden'>
-                    {game.iconUrl ? (
-                      <Image src={game.iconUrl} alt={`${game.gameName} icon`} fill className="object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-secondary">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                      </div>
-                    )}
+                  <div className='flex-1 flex items-center justify-center'>
+                    <Gamepad className="h-16 w-16 text-white/80" />
                   </div>
-                  <div className='mt-2'>
-                    <CardTitle className="truncate text-lg">{game.gameName}</CardTitle>
-                    <div className="mt-1 flex justify-between text-sm text-muted-foreground">
+                  <div className='text-white'>
+                    <CardTitle className="truncate text-lg drop-shadow-md">{game.gameName}</CardTitle>
+                    <div className="mt-1 flex justify-between text-sm text-white/90">
                       <span>{game.downloads.toLocaleString()} dl</span>
                       <span>{game.averageRating.toFixed(1)} ★</span>
                     </div>
@@ -149,3 +135,5 @@ export default function MyAppsPage() {
         </FirebaseClientProvider>
     )
 }
+
+    

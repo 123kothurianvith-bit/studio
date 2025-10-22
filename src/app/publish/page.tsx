@@ -10,7 +10,6 @@ import { collection, doc, runTransaction, serverTimestamp } from 'firebase/fires
 import { useRouter } from 'next/navigation';
 import { generateGameDescription } from '@/ai/flows/generate-game-description';
 import { summarizeWhatsNew } from '@/ai/flows/summarize-whats-new';
-import { generateAppIcon } from '@/ai/flows/generate-app-icon';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -172,14 +171,11 @@ function PublishComponent() {
     let gameData;
 
     try {
-        toast({ title: "Generating app icon...", description: "The AI is creating a unique icon for your game." });
-        const iconResult = await generateAppIcon({ name: values.gameName, genre: values.genre });
 
         gameData = {
             ...values,
             id: newGameRef.id,
             publisherId: user.uid,
-            iconUrl: iconResult.iconUrl,
             downloads: 0,
             averageRating: 0,
             ratings: [],

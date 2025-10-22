@@ -137,10 +137,6 @@
           "type": "string",
           "description": "URL for downloading the game."
         },
-        "iconUrl": {
-          "type": "string",
-          "description": "URL of the AI-generated app icon."
-        },
         "description": {
           "type": "string",
           "description": "The full description of the game."
