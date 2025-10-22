@@ -10,6 +10,7 @@ import { Gamepad, Loader2, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface PublishedGame {
   id: string;
@@ -17,6 +18,20 @@ interface PublishedGame {
   downloads: number;
   averageRating: number;
 }
+
+const gradients = [
+    'from-pink-500 to-purple-600',
+    'from-emerald-400 to-cyan-600',
+    'from-amber-400 to-orange-600',
+    'from-rose-400 to-fuchsia-600',
+    'from-indigo-500 to-sky-600',
+    'from-red-500 to-yellow-500',
+    'from-green-400 to-blue-500',
+];
+
+const getGradientForCard = (index: number) => {
+    return gradients[index % gradients.length];
+};
 
 function MyAppsComponent() {
   const firestore = useFirestore();
@@ -88,20 +103,23 @@ function MyAppsComponent() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {games.map((game) => (
-          <Card key={game.id} className="overflow-hidden">
-             <Link href={`/game/${game.id}`}>
-              <CardContent className="p-4 flex items-center gap-4">
-                  <div className='flex-1'>
-                    <CardTitle className="truncate text-lg">{game.gameName}</CardTitle>
-                    <div className="mt-1 flex justify-between text-sm text-muted-foreground">
-                      <span>Downloads: {game.downloads}</span>
-                      <span>Rating: {game.averageRating.toFixed(1)} ★</span>
+        {games.map((game, index) => (
+           <Link href={`/game/${game.id}`} key={game.id}>
+            <Card className={cn("group overflow-hidden rounded-xl border-0 shadow-lg transition-all hover:scale-105 bg-gradient-to-br", getGradientForCard(index))}>
+              <CardContent className="p-4 flex flex-col justify-between aspect-square">
+                  <div className='flex-1 flex items-center justify-center'>
+                    <Gamepad className="h-16 w-16 text-white/80" />
+                  </div>
+                  <div className='text-white'>
+                    <CardTitle className="truncate text-lg drop-shadow-md">{game.gameName}</CardTitle>
+                    <div className="mt-1 flex justify-between text-sm text-white/90">
+                      <span>{game.downloads.toLocaleString()} dl</span>
+                      <span>{game.averageRating.toFixed(1)} ★</span>
                     </div>
                   </div>
               </CardContent>
-            </Link>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
@@ -115,5 +133,3 @@ export default function MyAppsPage() {
         </FirebaseClientProvider>
     )
 }
-
-    
