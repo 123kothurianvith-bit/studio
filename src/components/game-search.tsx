@@ -71,14 +71,18 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
         onChange={(e) => handleSearch(e.target.value)}
       />
        {showAnimation && (
-         <span 
+         <div 
           className={cn(
-            "absolute left-8 top-1/2 -translate-y-1/2 text-sm text-transparent bg-gradient-to-r from-primary to-blue-500 bg-clip-text pointer-events-none transition-opacity duration-500",
+            "absolute left-8 top-1/2 -translate-y-1/2 text-sm pointer-events-none transition-opacity duration-500",
             isTextVisible ? "opacity-100" : "opacity-0"
           )}
          >
-           Search for &quot;{animatedText}&quot;
-        </span>
+           <span className="text-muted-foreground">Search for &quot;</span>
+           <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text font-semibold text-transparent">
+            {animatedText}
+           </span>
+            <span className="text-muted-foreground">&quot;</span>
+        </div>
        )}
     </div>
   );
