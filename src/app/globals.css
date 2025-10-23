@@ -99,4 +99,12 @@ body {
   .placeholder-hidden::placeholder {
     opacity: 0;
   }
+   .splash-logo-start {
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  .splash-logo-end {
+    top: 2rem;
+    left: 1rem;
+    transform: translate(0, 0) scale(1);
+  }
 }
