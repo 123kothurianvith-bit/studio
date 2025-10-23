@@ -57,19 +57,20 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
     handleFilterChange('q', term);
   }, 300);
   
-  const hasSearchQuery = searchParams.get('q');
+  const hasSearchQuery = !!searchParams.get('q');
+  const showAnimation = !hasSearchQuery && animatedText;
 
   return (
     <div className="relative w-full">
       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
       <Input
         type="search"
-        placeholder="Search for games..."
+        placeholder={showAnimation ? '' : 'Search for games...'}
         className="w-full rounded-lg bg-muted pl-8"
         defaultValue={searchParams.get('q') || ''}
         onChange={(e) => handleSearch(e.target.value)}
       />
-       {!hasSearchQuery && animatedText && (
+       {showAnimation && (
          <span 
           className={cn(
             "absolute left-8 top-1/2 -translate-y-1/2 text-sm text-transparent bg-gradient-to-r from-primary to-blue-500 bg-clip-text pointer-events-none transition-opacity duration-500",
