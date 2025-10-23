@@ -18,7 +18,7 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
               Snapter Games
             </span>
           </Link>
-          <div className="relative ml-auto flex flex-1 items-center gap-2 md:grow-0">
+          <div className="relative ml-auto flex flex-1 items-center gap-2">
               <GameSearch />
               <ThemeToggle />
           </div>
