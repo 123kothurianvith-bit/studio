@@ -107,7 +107,7 @@ function HomePageComponent() {
     <div className="space-y-8 pb-8">
       {!searchQuery && featuredGames.length > 0 && (
           <div className="space-y-4">
-              <h2 className="px-4 text-2xl font-bold tracking-tight">Featured</h2>
+              <h2 className="px-4 text-2xl font-bold tracking-tight">Featured Games</h2>
               <Carousel 
                   opts={{ loop: true }}
                   plugins={[plugin.current]}
