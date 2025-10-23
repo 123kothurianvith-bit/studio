@@ -13,27 +13,29 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [placeholder, setPlaceholder] = useState("Search...");
-  const [ currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+  const [animatedText, setAnimatedText] = useState("");
+  const [isTextVisible, setIsTextVisible] = useState(true);
 
   useEffect(() => {
     if (gameNames.length === 0) {
-        setPlaceholder("Search...");
+        setAnimatedText("");
         return;
     }
 
+    setAnimatedText(gameNames[0]);
+    let currentIndex = 0;
+
     const intervalId = setInterval(() => {
-        setIsVisible(false); // Start fade out
+        setIsTextVisible(false); // Start fade out
         setTimeout(() => {
-            setCurrentIndex((prevIndex) => (prevIndex + 1) % gameNames.length);
-            setPlaceholder(`Search for "${gameNames[(currentIndex + 1) % gameNames.length]}"`);
-            setIsVisible(true); // Start fade in
-        }, 500); // Time for fade out
+            currentIndex = (currentIndex + 1) % gameNames.length;
+            setAnimatedText(gameNames[currentIndex]);
+            setIsTextVisible(true); // Start fade in
+        }, 500); // Wait for fade out to complete
     }, 3000); // Change text every 3 seconds
 
     return () => clearInterval(intervalId);
-  }, [gameNames, currentIndex]);
+  }, [gameNames]);
 
 
   const handleFilterChange = (key: string, value: string | null) => {
@@ -54,17 +56,29 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
   const handleSearch = useDebouncedCallback((term: string) => {
     handleFilterChange('q', term);
   }, 300);
+  
+  const hasSearchQuery = searchParams.get('q');
 
   return (
     <div className="relative w-full">
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
       <Input
         type="search"
-        placeholder={placeholder}
-        className={cn("w-full rounded-lg bg-muted pl-8 placeholder-transition", isVisible ? 'placeholder-visible' : 'placeholder-hidden')}
+        placeholder="Search for games..."
+        className="w-full rounded-lg bg-muted pl-8"
         defaultValue={searchParams.get('q') || ''}
         onChange={(e) => handleSearch(e.target.value)}
       />
+       {!hasSearchQuery && animatedText && (
+         <span 
+          className={cn(
+            "absolute left-8 top-1/2 -translate-y-1/2 text-sm text-transparent bg-gradient-to-r from-primary to-blue-500 bg-clip-text pointer-events-none transition-opacity duration-500",
+            isTextVisible ? "opacity-100" : "opacity-0"
+          )}
+         >
+           Search for &quot;{animatedText}&quot;
+        </span>
+       )}
     </div>
   );
 }
