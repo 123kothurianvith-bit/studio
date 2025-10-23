@@ -8,12 +8,23 @@ import { Input } from './ui/input';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
+const gradients = [
+    'from-pink-500 to-purple-600',
+    'from-emerald-400 to-cyan-600',
+    'from-amber-400 to-orange-600',
+    'from-rose-400 to-fuchsia-600',
+    'from-indigo-500 to-sky-600',
+    'from-red-500 to-yellow-500',
+    'from-green-400 to-blue-500',
+];
+
 export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [animatedText, setAnimatedText] = useState("");
+  const [currentGradient, setCurrentGradient] = useState(gradients[0]);
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   useEffect(() => {
@@ -23,6 +34,7 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
     }
 
     setAnimatedText(gameNames[0]);
+    setCurrentGradient(gradients[0]);
     let currentIndex = 0;
 
     const intervalId = setInterval(() => {
@@ -30,6 +42,7 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
         setTimeout(() => {
             currentIndex = (currentIndex + 1) % gameNames.length;
             setAnimatedText(gameNames[currentIndex]);
+            setCurrentGradient(gradients[currentIndex % gradients.length]);
             setIsTextVisible(true); // Start fade in
         }, 500); // Wait for fade out to complete
     }, 3000); // Change text every 3 seconds
@@ -61,7 +74,7 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
   const showAnimation = !hasSearchQuery && animatedText;
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full md:grow">
       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
       <Input
         type="search"
@@ -78,7 +91,7 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
           )}
          >
            <span className="text-muted-foreground">Search for &quot;</span>
-           <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text font-semibold text-transparent">
+           <span className={cn("bg-gradient-to-r bg-clip-text font-semibold text-transparent", currentGradient)}>
             {animatedText}
            </span>
             <span className="text-muted-foreground">&quot;</span>
