@@ -117,7 +117,7 @@ function HomePageComponent() {
               >
                   <CarouselContent className="-ml-2">
                       {featuredGames.map((game, index) => (
-                          <CarouselItem key={game.id} className="pl-4 basis-full md:basis-1/2">
+                          <CarouselItem key={game.id} className="pl-4 basis-full">
                               <FeaturedGameCard game={game} index={index} />
                           </CarouselItem>
                       ))}
@@ -153,8 +153,8 @@ function HomePageComponent() {
              <Carousel opts={{align: "start"}} className="w-full">
                 <CarouselContent className="-ml-2">
                     {recommendedGames.map((game, index) => (
-                        <CarouselItem key={`${game.id}-${index}`} className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                           <GameCard game={game} variant="compact" />
+                        <CarouselItem key={`${game.id}-${index}`} className="pl-4 basis-full">
+                           <GameCard game={game} variant="default" />
                         </CarouselItem>
                     ))}
                 </CarouselContent>
@@ -168,7 +168,7 @@ function HomePageComponent() {
             <Carousel opts={{align: "start"}} className="w-full">
                 <CarouselContent className="-ml-2">
                     {popularGames.map((game, index) => (
-                        <CarouselItem key={`${game.id}-${index}`} className="pl-4 basis-full md:basis-1/2">
+                        <CarouselItem key={`${game.id}-${index}`} className="pl-4 basis-full">
                            <GameCard key={game.id} game={game} index={index}/>
                         </CarouselItem>
                     ))}
