@@ -86,7 +86,7 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
        {showAnimation && (
          <div 
           className={cn(
-            "absolute left-8 top-1/2 -translate-y-1/2 text-sm pointer-events-none transition-opacity duration-500 whitespace-nowrap",
+            "absolute left-8 right-4 top-1/2 -translate-y-1/2 text-sm pointer-events-none transition-opacity duration-500 whitespace-nowrap overflow-hidden text-ellipsis",
             isTextVisible ? "opacity-100" : "opacity-0"
           )}
          >
