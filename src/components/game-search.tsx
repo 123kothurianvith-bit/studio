@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 import { Input } from './ui/input';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const gradients = [
     'from-pink-500 to-purple-600',
@@ -22,6 +23,7 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const [animatedText, setAnimatedText] = useState("");
   const [currentGradient, setCurrentGradient] = useState(gradients[0]);
@@ -90,11 +92,11 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
             isTextVisible ? "opacity-100" : "opacity-0"
           )}
          >
-           <span className="text-muted-foreground">Search for &quot;</span>
+           {!isMobile && <span className="text-muted-foreground">Search for &quot;</span>}
            <span className={cn("bg-gradient-to-r bg-clip-text font-semibold text-transparent", currentGradient)}>
             {animatedText}
            </span>
-            <span className="text-muted-foreground">&quot;</span>
+           {!isMobile && <span className="text-muted-foreground">&quot;</span>}
         </div>
        )}
     </div>
