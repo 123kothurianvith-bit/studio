@@ -107,4 +107,20 @@ body {
     left: 1rem;
     transform: translate(0, 0) scale(1);
   }
+  @keyframes shake {
+    0% {
+      transform: translateY(0) rotateX(0);
+    }
+    50% {
+      transform: translateY(-20px) rotateX(30deg);
+    }
+    100% {
+      transform: translateY(0) rotateX(0);
+    }
+  }
+
+  .animate-shake {
+    animation: shake 1.5s ease-in-out;
+    transform-style: preserve-3d;
+  }
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { Suspense, useMemo, useRef, useState, useEffect } from 'react';
@@ -87,7 +86,7 @@ function HomePageComponent() {
         }
         return allGames.filter(game =>
             game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            game.developerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (game.developerName && game.developerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
             game.description.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [allGames, searchQuery]);

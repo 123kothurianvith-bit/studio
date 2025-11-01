@@ -13,6 +13,8 @@ import { Card } from './ui/card';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useWishlist } from '@/contexts/wishlist-context';
+import { useInView } from '@/hooks/use-in-view';
+import { useRef } from 'react';
 
 type GameCardProps = {
   game: Game;
@@ -39,6 +41,9 @@ export default function GameCard({ game, variant = 'default', index = 0 }: GameC
   const firestore = useFirestore();
   const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
   const wishlisted = isWishlisted(game.id);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(cardRef, { margin: "-100px" });
+
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('a, button')) {
@@ -104,11 +109,16 @@ export default function GameCard({ game, variant = 'default', index = 0 }: GameC
 
   return (
     <div 
+      ref={cardRef}
       onClick={handleCardClick} 
       className={cn(
         "group w-full cursor-pointer overflow-hidden rounded-2xl border-0 shadow-lg transition-all bg-gradient-to-br p-4 flex items-center gap-4",
-         cardGradient
+         cardGradient,
+         isInView && "animate-shake"
       )}
+       style={{
+         animationDelay: `${Math.random() * 0.3}s`,
+       }}
     >
       <div className="flex-1 overflow-hidden">
         <h3 className="truncate font-semibold text-white text-lg drop-shadow-md">{game.title}</h3>
