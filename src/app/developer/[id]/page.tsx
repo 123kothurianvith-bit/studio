@@ -5,15 +5,14 @@ import { useParams } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
-import { doc, collection, query, where, updateDoc, arrayUnion, arrayRemove, runTransaction, increment } from 'firebase/firestore';
+import { doc, collection, query, where, arrayUnion, arrayRemove, runTransaction, increment } from 'firebase/firestore';
 import Link from 'next/link';
 import { Loader2, Frown, User as UserIcon, Rss } from 'lucide-react';
 import GameCard from '@/components/game-card';
 import type { Game, UserAccount } from '@/lib/types';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
 
 interface DeveloperProfile {
   id: string;
@@ -68,7 +67,6 @@ function DeveloperProfilePageComponent() {
     }
   }, [userAccount, developerId]);
 
-
   const handleFollowToggle = async () => {
     if (!user || !firestore || !developerDocRef || !userDocRef) {
       toast({ title: 'You must be logged in to follow developers.', variant: 'destructive'});
@@ -85,7 +83,6 @@ function DeveloperProfilePageComponent() {
             }
 
             if (isFollowing) {
-                // Unfollow
                 transaction.update(userDocRef, {
                     followingDeveloperIds: arrayRemove(developerId)
                 });
@@ -93,7 +90,6 @@ function DeveloperProfilePageComponent() {
                     followerCount: increment(-1)
                 });
             } else {
-                // Follow
                 transaction.update(userDocRef, {
                     followingDeveloperIds: arrayUnion(developerId)
                 });
@@ -105,7 +101,7 @@ function DeveloperProfilePageComponent() {
         setIsFollowing(!isFollowing);
         toast({
             title: isFollowing ? 'Unfollowed!' : 'Followed!',
-            description: `You are no longer following ${developer?.developerName}.`
+            description: `You are now ${isFollowing ? 'no longer' : ''} following ${developer?.developerName}.`
         });
     } catch (e) {
         console.error(e);
@@ -113,7 +109,6 @@ function DeveloperProfilePageComponent() {
     } finally {
         setIsFollowLoading(false);
     }
-
   }
 
   const allGames = useMemo(() => {
@@ -123,7 +118,7 @@ function DeveloperProfilePageComponent() {
         title: pg.gameName,
         platform: 'Android',
         price: 0,
-        genre: 'User Published',
+        genre: pg.genre || 'User Published',
         description: pg.description || 'A user published game.',
         imageHint: 'user game',
         downloadUrl: pg.downloadUrl,
@@ -195,7 +190,6 @@ function DeveloperProfilePageComponent() {
     </div>
   );
 }
-
 
 export default function DeveloperProfilePage() {
     return (

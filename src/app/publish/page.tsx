@@ -57,7 +57,6 @@ const formSchema = z.object({
     path: ["featuredDescription"],
 });
 
-
 type FormValues = z.infer<typeof formSchema>;
 
 function PublishComponent() {
@@ -77,6 +76,7 @@ function PublishComponent() {
       downloadUrl: '',
       isFeatured: false,
       featuredDescription: '',
+      genre: 'Action',
       keyFeatures: "",
       targetAudience: "",
       description: "",
@@ -85,7 +85,6 @@ function PublishComponent() {
     },
   });
 
-  // Effect to populate developer name once user data is loaded
   useEffect(() => {
     if (user?.profile?.developerName) {
       form.setValue('developerName', user.profile.developerName);
@@ -125,7 +124,6 @@ function PublishComponent() {
       console.error("Failed to generate description:", error);
       toast({
         title: "Generation Failed",
-        description: "There was an error generating the description. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -170,11 +168,11 @@ function PublishComponent() {
     }
     setIsSubmitting(true);
     
+    const userRef = doc(firestore, 'users', user.uid);
     const developerRef = doc(firestore, 'developers', user.uid);
     const gamesCollectionRef = collection(firestore, 'publishedGames');
     const newGameRef = doc(gamesCollectionRef);
 
-    let developerData: any;
     let gameData: any;
 
     try {
@@ -196,17 +194,20 @@ function PublishComponent() {
                     gameCount: (devDoc.data().gameCount || 0) + 1,
                     developerName: values.developerName,
                  });
-                 developerData = { ...devDoc.data(), gameCount: (devDoc.data().gameCount || 0) + 1};
             } else {
-                developerData = {
+                transaction.set(developerRef, {
                     id: user.uid,
                     developerName: values.developerName,
                     gameCount: 1,
                     followerCount: 0,
-                };
-                transaction.set(developerRef, developerData);
+                });
             }
             
+            // Sync developer name to user profile so it auto-fills next time
+            transaction.update(userRef, {
+                developerName: values.developerName
+            });
+
             transaction.set(newGameRef, gameData);
         });
 
@@ -229,7 +230,7 @@ function PublishComponent() {
         } else {
             toast({
                 title: "Publishing Failed",
-                description: error.message || "Could not publish the game. Please try again.",
+                description: error.message || "Could not publish the game.",
                 variant: "destructive"
             });
         }
@@ -269,7 +270,7 @@ function PublishComponent() {
                     Publish a New Game
                 </CardTitle>
                 <CardDescription>
-                    Fill in the details below to publish your game to the store. Use AI to help with the description!
+                    Fill in the details below to publish your game to the store.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -349,9 +350,8 @@ function PublishComponent() {
                             <FormItem>
                                 <FormLabel>Featured Game Description</FormLabel>
                                 <FormControl>
-                                <Textarea placeholder="Enter a short, catchy description for the featured games section..." {...field} />
+                                <Textarea placeholder="Enter a short, catchy description..." {...field} />
                                 </FormControl>
-                                <FormDescription>This description will be shown on the featured game card on the homepage.</FormDescription>
                                 <FormMessage />
                             </FormItem>
                             )}
@@ -359,14 +359,13 @@ function PublishComponent() {
                        </div>
                     )}
 
-
                     <FormField
                       control={form.control}
                       name="genre"
                       render={({ field }) => (
                           <FormItem>
                           <FormLabel>Genre</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                               <SelectTrigger>
                                   <SelectValue placeholder="Select a genre" />
@@ -392,7 +391,7 @@ function PublishComponent() {
                           <FormItem>
                           <FormLabel>Target Audience</FormLabel>
                           <FormControl>
-                              <Input placeholder="e.g., Fans of classic RPGs, Competitive players" {...field} />
+                              <Input placeholder="e.g., Fans of classic RPGs" {...field} />
                           </FormControl>
                           <FormMessage />
                           </FormItem>
@@ -407,13 +406,10 @@ function PublishComponent() {
                           <FormLabel>Key Features</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="e.g., Deep customization, Fast-paced combat, Branching narrative"
+                              placeholder="e.g., Deep customization, Fast-paced combat"
                               {...field}
                             />
                           </FormControl>
-                          <FormDescription>
-                            Enter a comma-separated list of key features for the AI.
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -437,7 +433,7 @@ function PublishComponent() {
                           </div>
                           <FormControl>
                             <Textarea
-                              placeholder="A detailed description of the game will appear here..."
+                              placeholder="A detailed description will appear here..."
                               className="min-h-[150px]"
                               {...field}
                             />
@@ -454,7 +450,7 @@ function PublishComponent() {
                             <FormItem>
                                 <FormLabel>What's New (Optional)</FormLabel>
                                 <FormControl>
-                                    <Textarea className="min-h-[120px]" placeholder="e.g., Bug fixes, new levels, performance improvements..." {...field} />
+                                    <Textarea className="min-h-[120px]" placeholder="e.g., Bug fixes, new levels..." {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -474,7 +470,7 @@ function PublishComponent() {
                             </Button>
                             </div>
                             <FormControl>
-                            <Input placeholder="AI-generated summary will appear here..." {...field} />
+                            <Input placeholder="AI-generated summary..." {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
