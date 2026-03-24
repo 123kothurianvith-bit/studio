@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFirestore, useUser, FirebaseClientProvider, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -73,7 +73,7 @@ function PublishComponent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       gameName: '',
-      developerName: user?.profile?.developerName || '',
+      developerName: '',
       downloadUrl: '',
       isFeatured: false,
       featuredDescription: '',
@@ -84,6 +84,13 @@ function PublishComponent() {
       whatsNewSummary: "",
     },
   });
+
+  // Effect to populate developer name once user data is loaded
+  useEffect(() => {
+    if (user?.profile?.developerName) {
+      form.setValue('developerName', user.profile.developerName);
+    }
+  }, [user, form]);
 
   const isFeaturedValue = form.watch('isFeatured');
 
@@ -167,11 +174,10 @@ function PublishComponent() {
     const gamesCollectionRef = collection(firestore, 'publishedGames');
     const newGameRef = doc(gamesCollectionRef);
 
-    let developerData;
-    let gameData;
+    let developerData: any;
+    let gameData: any;
 
     try {
-
         gameData = {
             ...values,
             id: newGameRef.id,
@@ -188,11 +194,12 @@ function PublishComponent() {
             if (devDoc.exists()) {
                  transaction.update(developerRef, {
                     gameCount: (devDoc.data().gameCount || 0) + 1,
-                    developerName: values.developerName, // Also update name on new publish
+                    developerName: values.developerName,
                  });
                  developerData = { ...devDoc.data(), gameCount: (devDoc.data().gameCount || 0) + 1};
             } else {
                 developerData = {
+                    id: user.uid,
                     developerName: values.developerName,
                     gameCount: 1,
                     followerCount: 0,
@@ -209,22 +216,23 @@ function PublishComponent() {
         });
         router.push('/my-apps');
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Publishing failed:", error);
-        toast({
-            title: "Publishing Failed",
-            description: "Could not publish the game. Please try again.",
-            variant: "destructive"
-        });
-        const permissionError = new FirestorePermissionError({
-          path: newGameRef.path, 
-          operation: 'write',
-          requestResourceData: {
-            developerProfile: developerData,
-            game: gameData,
-          }
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: newGameRef.path, 
+                operation: 'create',
+                requestResourceData: gameData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                title: "Publishing Failed",
+                description: error.message || "Could not publish the game. Please try again.",
+                variant: "destructive"
+            });
+        }
     } finally {
         setIsSubmitting(false);
     }
@@ -358,7 +366,7 @@ function PublishComponent() {
                       render={({ field }) => (
                           <FormItem>
                           <FormLabel>Genre</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                               <SelectTrigger>
                                   <SelectValue placeholder="Select a genre" />
@@ -496,5 +504,3 @@ export default function PublishPage() {
         </FirebaseClientProvider>
     )
 }
-
-    
