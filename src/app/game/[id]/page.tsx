@@ -8,13 +8,16 @@ import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Star, Download, Edit, Heart } from 'lucide-react';
+import { Loader2, Star, Download, Edit, Heart, Users, Info, ChevronRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useWishlist } from '@/contexts/wishlist-context';
+import Image from 'next/image';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface PublishedGame {
   id: string;
@@ -29,6 +32,7 @@ interface PublishedGame {
   createdAt: any;
   whatsNew?: string;
   whatsNewSummary?: string;
+  genre: string;
 }
 
 function StarRating({ currentRating, onRate, disabled }: { currentRating: number, onRate: (rating: number) => void, disabled: boolean }) {
@@ -43,14 +47,14 @@ function StarRating({ currentRating, onRate, disabled }: { currentRating: number
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
                     disabled={disabled}
-                    className="disabled:cursor-not-allowed"
+                    className="disabled:cursor-not-allowed p-1"
                 >
                     <Star
                         className={cn(
-                            'h-6 w-6 transition-colors sm:h-8 sm:w-8',
+                            'h-8 w-8 transition-all',
                             (hoverRating || currentRating) >= star
-                                ? 'text-primary fill-primary'
-                                : 'text-muted-foreground/50'
+                                ? 'text-primary fill-primary scale-110'
+                                : 'text-muted-foreground/30'
                         )}
                     />
                 </button>
@@ -147,6 +151,15 @@ function GameDetailPageComponent() {
   
   const isPublisher = user && game && user.uid === game.publisherId;
 
+  // Derive an image hint based on genre or name for placeholders
+  const imageHint = game?.genre?.toLowerCase() || 'game';
+  const screenshots = useMemo(() => {
+    const matched = PlaceHolderImages.filter(p => p.imageHint.includes(imageHint));
+    return matched.length > 0 ? matched : PlaceHolderImages.slice(0, 3);
+  }, [imageHint]);
+
+  const iconImage = screenshots[0]?.imageUrl || 'https://picsum.photos/seed/icon/200/200';
+
   if (isLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
@@ -164,102 +177,175 @@ function GameDetailPageComponent() {
   }
 
   return (
-    <div className="container mx-auto max-w-5xl space-y-8 py-4 sm:py-8">
-      <header className="flex flex-col gap-6 sm:flex-row">
-        <div className="flex flex-col justify-center space-y-3">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">{game.gameName}</h1>
-          <Link href={`/developer/${game.publisherId}`} className="text-lg text-primary hover:underline sm:text-xl">
+    <div className="container mx-auto max-w-4xl space-y-6 pb-20 pt-4 px-4 sm:pt-8">
+      {/* Header Section */}
+      <section className="flex items-start gap-4 sm:gap-6">
+        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl shadow-md sm:h-28 sm:w-28">
+           <Image 
+              src={iconImage} 
+              alt={game.gameName} 
+              fill 
+              className="object-cover" 
+              data-ai-hint={imageHint}
+           />
+        </div>
+        <div className="flex flex-col gap-1 overflow-hidden">
+          <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-3xl">{game.gameName}</h1>
+          <Link href={`/developer/${game.publisherId}`} className="w-fit text-sm font-medium text-primary hover:underline sm:text-base">
             {game.developerName}
           </Link>
-          <p className="text-sm text-muted-foreground">Contains ads</p>
+          <div className="text-xs text-muted-foreground sm:text-sm">Contains ads · In-app purchases</div>
         </div>
-      </header>
+      </section>
 
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-        <Button onClick={handleInstallClick} className="w-full sm:w-auto" size="lg" disabled={!game.downloadUrl} variant="default">
-          <Download className="mr-2 h-5 w-5" />
+      {/* Metadata Row */}
+      <section className="flex items-center justify-around py-2 sm:justify-start sm:gap-12">
+        <div className="flex flex-col items-center gap-1 sm:items-start">
+            <div className="flex items-center gap-1 text-sm font-bold sm:text-base">
+                {game.averageRating.toFixed(1)} <Star className="h-3 w-3 fill-foreground text-foreground" />
+            </div>
+            <div className="text-[10px] text-muted-foreground sm:text-xs">{game.ratings.length.toLocaleString()} reviews</div>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col items-center gap-1 sm:items-start">
+            <div className="text-sm font-bold sm:text-base flex items-center gap-1">
+                <Download className="h-4 w-4" />
+                {(game.downloads || 0).toLocaleString()}
+            </div>
+            <div className="text-[10px] text-muted-foreground sm:text-xs">Downloads</div>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col items-center gap-1 sm:items-start">
+            <div className="rounded border border-foreground/20 px-1 text-[10px] font-bold sm:text-xs">3+</div>
+            <div className="text-[10px] text-muted-foreground sm:text-xs">Rated for 3+</div>
+        </div>
+      </section>
+
+      {/* Primary Actions */}
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Button 
+            onClick={handleInstallClick} 
+            className="h-11 w-full bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90 sm:w-64" 
+            disabled={!game.downloadUrl}
+        >
           Install
         </Button>
-         <Button onClick={handleWishlistToggle} variant="outline" size="lg" className="w-full sm:w-auto">
-            <Heart className={cn("mr-2 h-5 w-5", wishlisted && "fill-red-500 text-red-500")} />
-            {wishlisted ? 'Wishlisted' : 'Wishlist'}
-        </Button>
-        {isPublisher && (
-          <Button asChild variant="outline" className="w-full sm:w-auto" size="lg">
-            <Link href={`/game/${id}/edit`}>
-              <Edit className="mr-2 h-5 w-5" />
-              Edit
-            </Link>
-          </Button>
-        )}
-      </div>
+        <div className="flex gap-2">
+            <Button 
+                onClick={handleWishlistToggle} 
+                variant="outline" 
+                className="flex-1 sm:flex-none"
+            >
+                <Heart className={cn("mr-2 h-5 w-5", wishlisted && "fill-destructive text-destructive")} />
+                {wishlisted ? 'In Wishlist' : 'Add to Wishlist'}
+            </Button>
+            {isPublisher && (
+              <Button asChild variant="outline" size="icon">
+                <Link href={`/game/${id}/edit`}>
+                  <Edit className="h-5 w-5" />
+                </Link>
+              </Button>
+            )}
+        </div>
+      </section>
+
+      {/* Screenshots Carousel */}
+      <section className="pt-2">
+          <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
+            <CarouselContent className="-ml-2">
+              {screenshots.map((shot, idx) => (
+                <CarouselItem key={idx} className="pl-2 basis-3/4 sm:basis-1/3">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border bg-muted">
+                    <Image 
+                        src={shot.imageUrl} 
+                        alt={`Screenshot ${idx + 1}`} 
+                        fill 
+                        className="object-cover"
+                        data-ai-hint={shot.imageHint}
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+      </section>
+
+      {/* About Section */}
+      <section className="space-y-3 pt-4">
+          <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold sm:text-xl">About this game</h2>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="line-clamp-3 text-sm text-muted-foreground sm:text-base">
+            {game.description || 'No description available.'}
+          </p>
+          <div className="flex flex-wrap gap-2 pt-2">
+              <div className="rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium">{game.genre}</div>
+              <div className="rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium">Casual</div>
+              <div className="rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium">Single Player</div>
+          </div>
+      </section>
 
       <Separator />
 
+      {/* What's New Section */}
       {(game.whatsNew || game.whatsNewSummary) && (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>What's New</CardTitle>
-              {game.whatsNewSummary && <CardDescription>{game.whatsNewSummary}</CardDescription>}
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap text-muted-foreground">{game.whatsNew}</p>
-            </CardContent>
-          </Card>
-          <Separator />
-        </>
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold sm:text-xl">What's New</h2>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </div>
+          {game.whatsNewSummary && (
+            <div className="rounded-lg bg-primary/5 p-3 text-sm text-primary">
+                {game.whatsNewSummary}
+            </div>
+          )}
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground sm:text-base">
+            {game.whatsNew}
+          </p>
+        </section>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ratings and reviews</CardTitle>
-          <CardDescription>Ratings and reviews are verified and are from people who use the same type of device that you use.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-8 md:grid-cols-2">
-          <div className="flex flex-col items-center justify-center space-y-2">
-            <div className="text-6xl font-bold">{game.averageRating.toFixed(1)}</div>
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className={cn('h-6 w-6', game.averageRating >= star ? 'text-primary fill-primary' : 'text-muted-foreground/30')} />
-              ))}
+      {/* Ratings Section */}
+      <section className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold sm:text-xl">Ratings and reviews</h2>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <div className="flex items-start gap-8">
+            <div className="flex flex-col items-center shrink-0">
+                <div className="text-5xl font-bold">{game.averageRating.toFixed(1)}</div>
+                <div className="mt-1 flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <Star key={star} className={cn('h-3 w-3', game.averageRating >= star ? 'text-primary fill-primary' : 'text-muted-foreground/30')} />
+                    ))}
+                </div>
+                <div className="mt-1 text-[10px] text-muted-foreground">{game.ratings.length.toLocaleString()} ratings</div>
             </div>
-            <div className="text-muted-foreground">{game.ratings.length.toLocaleString()} reviews</div>
-          </div>
+            <div className="flex flex-1 flex-col gap-1.5">
+                {ratingDistribution.map((count, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                        <span className="w-2 text-[10px] font-medium">{5 - i}</span>
+                        <Progress value={game.ratings.length > 0 ? (count / game.ratings.length) * 100 : 0} className="h-2 flex-1 bg-muted" />
+                    </div>
+                ))}
+            </div>
+        </div>
+      </section>
 
-          <div className="w-full space-y-2">
-            {ratingDistribution.map((count, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="w-3 text-sm font-medium">{5 - i}</span>
-                <Progress value={game.ratings.length > 0 ? (count / game.ratings.length) * 100 : 0} className="h-2 flex-1" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Rate this game</CardTitle>
-          <CardDescription>Tell others what you think</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center space-y-4">
-          <StarRating currentRating={userRating} onRate={handleRateGame} disabled={!user || isSubmittingRating} />
-          <p className="text-sm text-muted-foreground">
-            {user ? (isSubmittingRating ? "Submitting..." : (userRating > 0 ? "You rated this game" : "Share your experience")) : "Log in to rate"}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>About this game</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="whitespace-pre-wrap text-muted-foreground">{game.description || 'No description available.'}</p>
-        </CardContent>
-      </Card>
-
+      {/* Rate This App Section */}
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex flex-col items-center gap-4 text-center">
+            <div className="space-y-1">
+                <h3 className="text-lg font-bold">Rate this game</h3>
+                <p className="text-sm text-muted-foreground">Tell others what you think</p>
+            </div>
+            <StarRating currentRating={userRating} onRate={handleRateGame} disabled={!user || isSubmittingRating} />
+            <p className="text-xs font-medium text-primary">
+                {user ? (isSubmittingRating ? "Submitting..." : (userRating > 0 ? "Edit your rating" : "Write a review")) : "Log in to rate"}
+            </p>
+        </div>
+      </section>
     </div>
   );
 }
