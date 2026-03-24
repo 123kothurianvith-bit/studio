@@ -28,6 +28,13 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
   const [animatedText, setAnimatedText] = useState("");
   const [currentGradient, setCurrentGradient] = useState(gradients[0]);
   const [isTextVisible, setIsTextVisible] = useState(true);
+  const [inputValue, setInputValue] = useState(searchParams.get('q') || '');
+
+  // Sync internal state with URL params (e.g. if cleared externally or navigating back)
+  useEffect(() => {
+    const query = searchParams.get('q') || '';
+    setInputValue(query);
+  }, [searchParams]);
 
   useEffect(() => {
     if (gameNames.length === 0) {
@@ -68,12 +75,18 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
     router.push(`${pathname}${query}`);
   };
 
-  const handleSearch = useDebouncedCallback((term: string) => {
+  const debouncedSearch = useDebouncedCallback((term: string) => {
     handleFilterChange('q', term);
   }, 300);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    debouncedSearch(value);
+  };
   
-  const hasSearchQuery = !!searchParams.get('q');
-  const showAnimation = !hasSearchQuery && animatedText;
+  // Show animation only if there is no text in the input
+  const showAnimation = !inputValue && animatedText;
 
   return (
     <div className="relative w-full md:grow">
@@ -82,8 +95,8 @@ export default function GameSearch({ gameNames = [] }: { gameNames: string[]}) {
         type="search"
         placeholder={showAnimation ? '' : 'Search for games...'}
         className="w-full rounded-lg bg-muted pl-8"
-        defaultValue={searchParams.get('q') || ''}
-        onChange={(e) => handleSearch(e.target.value)}
+        value={inputValue}
+        onChange={handleInputChange}
       />
        {showAnimation && (
          <div 
