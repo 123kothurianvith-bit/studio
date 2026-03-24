@@ -8,16 +8,14 @@ import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Star, Download, Edit, Heart, Users, Info, ChevronRight } from 'lucide-react';
+import { Loader2, Star, Download, Edit, Heart, ChevronRight, Gamepad } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useWishlist } from '@/contexts/wishlist-context';
-import Image from 'next/image';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface PublishedGame {
   id: string;
@@ -34,6 +32,16 @@ interface PublishedGame {
   whatsNewSummary?: string;
   genre: string;
 }
+
+const gradients = [
+    'from-pink-500 to-purple-600',
+    'from-emerald-400 to-cyan-600',
+    'from-amber-400 to-orange-600',
+    'from-rose-400 to-fuchsia-600',
+    'from-indigo-500 to-sky-600',
+    'from-red-500 to-yellow-500',
+    'from-green-400 to-blue-500',
+];
 
 function StarRating({ currentRating, onRate, disabled }: { currentRating: number, onRate: (rating: number) => void, disabled: boolean }) {
     const [hoverRating, setHoverRating] = useState(0);
@@ -151,14 +159,9 @@ function GameDetailPageComponent() {
   
   const isPublisher = user && game && user.uid === game.publisherId;
 
-  // Derive an image hint based on genre or name for placeholders
-  const imageHint = game?.genre?.toLowerCase() || 'game';
-  const screenshots = useMemo(() => {
-    const matched = PlaceHolderImages.filter(p => p.imageHint.includes(imageHint));
-    return matched.length > 0 ? matched : PlaceHolderImages.slice(0, 3);
-  }, [imageHint]);
-
-  const iconImage = screenshots[0]?.imageUrl || 'https://picsum.photos/seed/icon/200/200';
+  // Derive gradient based on ID
+  const charCodeSum = useMemo(() => id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0), [id]);
+  const primaryGradient = gradients[charCodeSum % gradients.length];
 
   if (isLoading) {
     return (
@@ -180,14 +183,8 @@ function GameDetailPageComponent() {
     <div className="container mx-auto max-w-4xl space-y-6 pb-20 pt-4 px-4 sm:pt-8">
       {/* Header Section */}
       <section className="flex items-start gap-4 sm:gap-6">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl shadow-md sm:h-28 sm:w-28">
-           <Image 
-              src={iconImage} 
-              alt={game.gameName} 
-              fill 
-              className="object-cover" 
-              data-ai-hint={imageHint}
-           />
+        <div className={cn("relative h-20 w-20 shrink-0 flex items-center justify-center rounded-2xl shadow-md sm:h-28 sm:w-28 bg-gradient-to-br", primaryGradient)}>
+           <Gamepad className="h-10 w-10 text-white/40 sm:h-14 sm:w-14" />
         </div>
         <div className="flex flex-col gap-1 overflow-hidden">
           <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-3xl">{game.gameName}</h1>
@@ -249,20 +246,17 @@ function GameDetailPageComponent() {
         </div>
       </section>
 
-      {/* Screenshots Carousel */}
+      {/* Screenshots Carousel - Now using Gradients */}
       <section className="pt-2">
           <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
             <CarouselContent className="-ml-2">
-              {screenshots.map((shot, idx) => (
+              {[0, 1, 2].map((idx) => (
                 <CarouselItem key={idx} className="pl-2 basis-3/4 sm:basis-1/3">
-                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border bg-muted">
-                    <Image 
-                        src={shot.imageUrl} 
-                        alt={`Screenshot ${idx + 1}`} 
-                        fill 
-                        className="object-cover"
-                        data-ai-hint={shot.imageHint}
-                    />
+                  <div className={cn(
+                      "relative aspect-[16/9] w-full overflow-hidden rounded-xl border shadow-sm bg-gradient-to-br flex items-center justify-center",
+                      gradients[(charCodeSum + idx + 1) % gradients.length]
+                  )}>
+                    <Gamepad className="h-12 w-12 text-white/20" />
                   </div>
                 </CarouselItem>
               ))}
