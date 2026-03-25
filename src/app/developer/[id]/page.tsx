@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -81,23 +80,40 @@ function DeveloperProfilePageComponent() {
 
     runTransaction(firestore, async (transaction) => {
         const devDoc = await transaction.get(developerDocRef);
+        
+        // If developer profile doesn't exist, we can't increment followerCount.
+        // However, we should try to create it if we have at least one game to pull a name from.
         if (!devDoc.exists()) {
-            throw new Error("Developer profile not found. They might not have published any games yet.");
+            const firstGame = publishedGames?.[0];
+            if (firstGame) {
+                transaction.set(developerDocRef, {
+                    id: developerId,
+                    developerName: firstGame.developerName,
+                    gameCount: publishedGames?.length || 0,
+                    followerCount: isFollowing ? 0 : 1
+                });
+            } else {
+                throw new Error("Developer profile not found and no games found to initialize it.");
+            }
+        } else {
+            // Update the developer's follower count
+            transaction.update(developerDocRef, {
+                followerCount: increment(isFollowing ? -1 : 1)
+            });
         }
 
-        // Update the user's following list
-        transaction.update(userDocRef, followData);
+        // Use set with merge: true for the user document to handle cases where the doc doesn't exist yet.
+        transaction.set(userDocRef, {
+            ...followData,
+            email: user.email, // Ensure email is present if creating
+        }, { merge: true });
         
-        // Update the developer's follower count
-        transaction.update(developerDocRef, {
-            followerCount: increment(isFollowing ? -1 : 1)
-        });
     })
     .then(() => {
         setIsFollowing(!isFollowing);
         toast({
             title: isFollowing ? 'Unfollowed!' : 'Followed!',
-            description: `You are now ${isFollowing ? 'no longer' : ''} following ${developer?.developerName}.`
+            description: `You are now ${isFollowing ? 'no longer' : ''} following ${developer?.developerName || 'this developer'}.`
         });
     })
     .catch(async (error: any) => {
@@ -148,7 +164,7 @@ function DeveloperProfilePageComponent() {
     );
   }
 
-  if (!developer) {
+  if (!developer && publishedGames?.length === 0) {
     return (
       <div className="flex h-[80vh] items-center justify-center text-center">
          <div className="flex h-[50vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
@@ -173,9 +189,9 @@ function DeveloperProfilePageComponent() {
                 </div>
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
-                        {developer.developerName}
+                        {developer?.developerName || publishedGames?.[0]?.developerName || 'Unknown Developer'}
                     </h1>
-                    <p className="text-muted-foreground">{(developer.followerCount || 0).toLocaleString()} followers &middot; {developer.gameCount} apps</p>
+                    <p className="text-muted-foreground">{(developer?.followerCount || 0).toLocaleString()} followers &middot; {developer?.gameCount || publishedGames?.length || 0} apps</p>
                 </div>
             </div>
             {user && user.uid !== developerId && (
