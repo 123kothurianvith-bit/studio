@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -81,10 +82,13 @@ function DeveloperProfilePageComponent() {
     runTransaction(firestore, async (transaction) => {
         const devDoc = await transaction.get(developerDocRef);
         if (!devDoc.exists()) {
-            throw new Error("Developer not found!");
+            throw new Error("Developer profile not found. They might not have published any games yet.");
         }
 
+        // Update the user's following list
         transaction.update(userDocRef, followData);
+        
+        // Update the developer's follower count
         transaction.update(developerDocRef, {
             followerCount: increment(isFollowing ? -1 : 1)
         });
@@ -96,7 +100,7 @@ function DeveloperProfilePageComponent() {
             description: `You are now ${isFollowing ? 'no longer' : ''} following ${developer?.developerName}.`
         });
     })
-    .catch(async (error) => {
+    .catch(async (error: any) => {
         if (error.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: userDocRef.path,
@@ -105,7 +109,11 @@ function DeveloperProfilePageComponent() {
             });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            toast({ title: "Something went wrong", description: "Could not update follow status.", variant: "destructive"})
+            toast({ 
+                title: "Follow Action Failed", 
+                description: error.message || "Could not update follow status.", 
+                variant: "destructive"
+            });
         }
     })
     .finally(() => {
@@ -127,6 +135,7 @@ function DeveloperProfilePageComponent() {
         averageRating: pg.averageRating,
         publisherId: pg.publisherId,
         developerName: pg.developerName,
+        downloads: pg.downloads || 0,
     }));
     return transformedGames;
   }, [publishedGames]);
@@ -156,7 +165,7 @@ function DeveloperProfilePageComponent() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground sm:h-20 sm:w-20">
@@ -181,8 +190,8 @@ function DeveloperProfilePageComponent() {
             <h2 className="mb-4 text-2xl font-semibold tracking-tight">All apps from this developer</h2>
             {allGames.length > 0 ? (
                  <div className="flex flex-col gap-4">
-                    {allGames.map((game) => (
-                        <GameCard key={game.id} game={game} />
+                    {allGames.map((game, index) => (
+                        <GameCard key={game.id} game={game} index={index} />
                     ))}
                 </div>
             ) : (

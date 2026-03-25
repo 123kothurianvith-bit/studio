@@ -19,8 +19,10 @@ service cloud.firestore {
      * @description User accounts are strictly private and owned by the user.
      */
     match /users/{userId} {
-      allow get, list, update, delete: if isOwner(userId);
+      allow get, list: if isOwner(userId);
       allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
@@ -64,7 +66,7 @@ service cloud.firestore {
       allow create: if isOwner(developerId);
       allow update: if isSignedIn() && (
         isOwner(developerId) || 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount'])
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount', 'gameCount', 'developerName'])
       );
       allow delete: if isOwner(developerId);
     }
