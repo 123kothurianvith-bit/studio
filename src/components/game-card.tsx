@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Game } from '@/lib/types';
@@ -15,6 +14,8 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useWishlist } from '@/contexts/wishlist-context';
 import { useInView } from '@/hooks/use-in-view';
 import { useRef } from 'react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type GameCardProps = {
   game: Game;
@@ -58,9 +59,18 @@ export default function GameCard({ game, variant = 'default', index = 0 }: GameC
     if (game?.downloadUrl && firestore) {
       window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
       const gameDocRef = doc(firestore, 'publishedGames', game.id);
-      updateDoc(gameDocRef, {
-        downloads: (game.downloads || 0) + 1
-      });
+      const updateData = {
+          downloads: (game.downloads || 0) + 1
+      };
+      updateDoc(gameDocRef, updateData)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: gameDocRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
     }
   };
 

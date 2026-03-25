@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
+import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -106,23 +105,34 @@ function EditGameComponent() {
     if (!gameDocRef) return;
 
     setIsSubmitting(true);
-    try {
-      await updateDoc(gameDocRef, values);
-      toast({
-        title: 'Game Updated!',
-        description: `${game?.gameName} has been successfully updated.`,
+    
+    updateDoc(gameDocRef, values)
+      .then(() => {
+        toast({
+          title: 'Game Updated!',
+          description: `${game?.gameName} has been successfully updated.`,
+        });
+        router.push(`/game/${id}`);
+      })
+      .catch(async (error) => {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: gameDocRef.path,
+                operation: 'update',
+                requestResourceData: values,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                title: 'Update Failed',
+                description: error.message || 'An unexpected error occurred.',
+                variant: 'destructive',
+            });
+        }
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-      router.push(`/game/${id}`);
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        title: 'Update Failed',
-        description: error.message || 'An unexpected error occurred.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   }
 
   if (isLoading) {

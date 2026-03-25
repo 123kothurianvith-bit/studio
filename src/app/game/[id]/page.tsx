@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -189,39 +188,45 @@ function GameDetailPageComponent() {
     if (!user || !game || !gameDocRef || !firestore) return;
 
     setIsDeleting(true);
-    try {
+    
+    runTransaction(firestore, async (transaction) => {
         const developerRef = doc(firestore, 'developers', user.uid);
+        const devDoc = await transaction.get(developerRef);
         
-        await runTransaction(firestore, async (transaction) => {
-            const devDoc = await transaction.get(developerRef);
-            
-            if (devDoc.exists()) {
-                const currentCount = devDoc.data().gameCount || 0;
-                transaction.update(developerRef, {
-                    gameCount: Math.max(0, currentCount - 1)
-                });
-            }
-            
-            transaction.delete(gameDocRef);
-        });
-
+        if (devDoc.exists()) {
+            const currentCount = devDoc.data().gameCount || 0;
+            transaction.update(developerRef, {
+                gameCount: Math.max(0, currentCount - 1)
+            });
+        }
+        
+        transaction.delete(gameDocRef);
+    })
+    .then(() => {
         toast({
             title: 'Game Deleted',
             description: `${game.gameName} has been removed from the store.`,
         });
         router.push('/my-apps');
-    } catch (error: any) {
-        // Only handle unexpected errors here, permissions are handled by listener
-        if (error.code !== 'permission-denied') {
+    })
+    .catch(async (error) => {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: gameDocRef.path,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
             toast({
                 title: "Deletion Failed",
                 description: error.message || "Could not delete the game.",
                 variant: "destructive"
             });
         }
-    } finally {
+    })
+    .finally(() => {
         setIsDeleting(false);
-    }
+    });
   };
   
   const isPublisher = user && game && user.uid === game.publisherId;
@@ -337,7 +342,7 @@ function GameDetailPageComponent() {
         </div>
       </section>
 
-      {/* Screenshots Carousel - Using Gradients */}
+      {/* screenshots section */}
       <section className="pt-2">
           <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
             <CarouselContent className="-ml-2">

@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useParams } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
+import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { doc, collection, query, where, arrayUnion, arrayRemove, runTransaction, increment } from 'firebase/firestore';
 import Link from 'next/link';
 import { Loader2, Frown, User as UserIcon, Rss } from 'lucide-react';
@@ -75,40 +74,43 @@ function DeveloperProfilePageComponent() {
     
     setIsFollowLoading(true);
 
-    try {
-        await runTransaction(firestore, async (transaction) => {
-            const devDoc = await transaction.get(developerDocRef);
-            if (!devDoc.exists()) {
-                throw new Error("Developer not found!");
-            }
+    const followData = {
+        followingDeveloperIds: isFollowing ? arrayRemove(developerId) : arrayUnion(developerId)
+    };
 
-            if (isFollowing) {
-                transaction.update(userDocRef, {
-                    followingDeveloperIds: arrayRemove(developerId)
-                });
-                transaction.update(developerDocRef, {
-                    followerCount: increment(-1)
-                });
-            } else {
-                transaction.update(userDocRef, {
-                    followingDeveloperIds: arrayUnion(developerId)
-                });
-                transaction.update(developerDocRef, {
-                    followerCount: increment(1)
-                });
-            }
+    runTransaction(firestore, async (transaction) => {
+        const devDoc = await transaction.get(developerDocRef);
+        if (!devDoc.exists()) {
+            throw new Error("Developer not found!");
+        }
+
+        transaction.update(userDocRef, followData);
+        transaction.update(developerDocRef, {
+            followerCount: increment(isFollowing ? -1 : 1)
         });
+    })
+    .then(() => {
         setIsFollowing(!isFollowing);
         toast({
             title: isFollowing ? 'Unfollowed!' : 'Followed!',
             description: `You are now ${isFollowing ? 'no longer' : ''} following ${developer?.developerName}.`
         });
-    } catch (e) {
-        console.error(e);
-        toast({ title: "Something went wrong", description: "Could not update follow status.", variant: "destructive"})
-    } finally {
+    })
+    .catch(async (error) => {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'update',
+                requestResourceData: followData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({ title: "Something went wrong", description: "Could not update follow status.", variant: "destructive"})
+        }
+    })
+    .finally(() => {
         setIsFollowLoading(false);
-    }
+    });
   }
 
   const allGames = useMemo(() => {

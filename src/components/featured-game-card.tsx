@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Game } from '@/lib/types';
@@ -10,6 +9,8 @@ import { Card } from './ui/card';
 import { Heart, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/contexts/wishlist-context';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const gradients = [
@@ -42,9 +43,18 @@ export default function FeaturedGameCard({ game, index }: FeaturedGameCardProps)
     if (game?.downloadUrl && firestore) {
       window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
       const gameDocRef = doc(firestore, 'publishedGames', game.id);
-      updateDoc(gameDocRef, {
+      const updateData = {
         downloads: (game.downloads || 0) + 1,
-      });
+      };
+      updateDoc(gameDocRef, updateData)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: gameDocRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
     }
   };
 
