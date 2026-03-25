@@ -61,19 +61,15 @@ service cloud.firestore {
     match /games/{gameId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create: if false; 
       allow update: if false;
       allow delete: if false;
     }
 
     /**
      * @description Enforces ownership for published game documents, allowing public read access but restricting write access to the publisher.
+     * Regular users are allowed to update ratings, average rating, and download counts.
      * @path /publishedGames/{gameId}
-     * @allow (get, list) - Any user can read published game data.
-     * @allow (create) - Only the publisher can create a published game document if the 'publisherId' matches their UID.
-     * @allow (update, delete) - Only the publisher can update or delete a published game document.
-     * @deny (create, update, delete) - A different user cannot create, update, or delete another user's published game.
-     * @principle Enforces document ownership for writes, allows public reads.
      */
     match /publishedGames/{gameId} {
       function isOwner(publisherId) {
@@ -87,8 +83,11 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
       allow create: if isSignedIn() && request.resource.data.publisherId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.publisherId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.publisherId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        isOwner(resource.data.publisherId) || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings', 'averageRating', 'downloads'])
+      );
+      allow delete: if isSignedIn() && isOwner(resource.data.publisherId);
     }
 
     /**

@@ -27,6 +27,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface PublishedGame {
   id: string;
@@ -124,7 +126,7 @@ function GameDetailPageComponent() {
     return dist.reverse();
   }, [game]);
 
-  const handleRateGame = async (rating: number) => {
+  const handleRateGame = (rating: number) => {
     if (!user) {
         toast({ title: "Please log in to rate.", variant: 'destructive' });
         return;
@@ -145,28 +147,41 @@ function GameDetailPageComponent() {
     const totalRating = newRatings.reduce((acc, r) => acc + r.rating, 0);
     const newAverageRating = totalRating / newRatings.length;
 
-    try {
-        await updateDoc(gameDocRef, {
-            ratings: newRatings,
-            averageRating: newAverageRating,
+    const updateData = {
+        ratings: newRatings,
+        averageRating: newAverageRating,
+    };
+
+    updateDoc(gameDocRef, updateData)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: gameDocRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
 
-        toast({ title: "Rating submitted!", description: `You rated ${game.gameName} ${rating} stars.` });
-
-    } catch (error: any) {
-        console.error(error);
-        toast({ title: "Error submitting rating", description: error.message, variant: 'destructive' });
-    } finally {
-        setIsSubmittingRating(false);
-    }
+    // Optimistic update
+    toast({ title: "Rating submitted!", description: `You rated ${game.gameName} ${rating} stars.` });
+    setIsSubmittingRating(false);
   };
 
   const handleInstallClick = () => {
     if (game?.downloadUrl && gameDocRef) {
       window.open(game.downloadUrl, '_blank', 'noopener,noreferrer');
-      updateDoc(gameDocRef, {
+      const updateData = {
           downloads: (game.downloads || 0) + 1
-      });
+      };
+      updateDoc(gameDocRef, updateData)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: gameDocRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
     }
   };
 
@@ -196,12 +211,14 @@ function GameDetailPageComponent() {
         });
         router.push('/my-apps');
     } catch (error: any) {
-        console.error("Deletion failed:", error);
-        toast({
-            title: "Deletion Failed",
-            description: error.message || "Could not delete the game.",
-            variant: "destructive"
-        });
+        // Only handle unexpected errors here, permissions are handled by listener
+        if (error.code !== 'permission-denied') {
+            toast({
+                title: "Deletion Failed",
+                description: error.message || "Could not delete the game.",
+                variant: "destructive"
+            });
+        }
     } finally {
         setIsDeleting(false);
     }
