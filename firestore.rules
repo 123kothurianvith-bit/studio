@@ -3,116 +3,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- Helper Functions ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- Collection Rules ---
+
     /**
-     * @description Enforces strict user-ownership for user account documents.
-     * @path /users/{userId}
-     * @allow (create) - User 'user_abc' can create their own account document if request.auth.uid == 'user_abc'.
-     * @allow (get, list, update, delete) - User 'user_abc' can access their own account document.
-     * @deny (create, get, list, update, delete) - User 'user_xyz' cannot access user 'user_abc' account document.
-     * @principle Enforces document ownership for all operations.
+     * @description User accounts are strictly private and owned by the user.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
     /**
-     * @description Enforces strict user-ownership for wishlist documents within a user's subcollection.
-     * @path /users/{userId}/wishlists/{wishlistId}
-     * @allow (create) - User 'user_abc' can create a wishlist under their own user document.
-     * @allow (get, list, update, delete) - User 'user_abc' can access and manage their own wishlists.
-     * @deny (create, get, list, update, delete) - User 'user_xyz' cannot access user 'user_abc' wishlists.
-     * @principle Enforces document ownership for all operations.
+     * @description User wishlists are private subcollections owned by the parent user.
      */
     match /users/{userId}/wishlists/{wishlistId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
     /**
-     * @description Allows public read access to game documents, but restricts write access.
-     * @path /games/{gameId}
-     * @allow (get, list) - Any user can read game data.
-     * @deny (create, update, delete) - No one can create, update, or delete game data without proper authorization.
-     * @principle Allows public reads with restricted writes.
+     * @description Public game catalog. Read-only for most.
      */
     match /games/{gameId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false; 
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow write: if false; 
     }
 
     /**
-     * @description Enforces ownership for published game documents, allowing public read access but restricting write access to the publisher.
-     * Regular users are allowed to update ratings, average rating, and download counts.
-     * @path /publishedGames/{gameId}
+     * @description Developer-published games. 
+     * Read access is public. 
+     * Write access is restricted to the publisher, except for ratings and downloads which can be updated by any signed-in user.
      */
     match /publishedGames/{gameId} {
-      function isOwner(publisherId) {
-        return request.auth != null && request.auth.uid == publisherId;
-      }
-
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.publisherId == request.auth.uid;
       allow update: if isSignedIn() && (
         isOwner(resource.data.publisherId) || 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings', 'averageRating', 'downloads'])
       );
-      allow delete: if isSignedIn() && isOwner(resource.data.publisherId);
+      allow delete: if isOwner(resource.data.publisherId);
     }
 
     /**
-     * @description Enforces ownership for developer profile documents, allowing public read access but restricting write access to the developer.
-     * @path /developers/{developerId}
-     * @allow (get, list) - Any user can read developer profile data.
-     * @allow (create, update, delete) - Only the developer can create, update, or delete their own profile.
-     * @deny (create, update, delete) - A different user cannot create, update, or delete another user's developer profile.
-     * @principle Enforces document ownership for all operations.
+     * @description Developer profiles.
+     * Read access is public.
+     * Write access is restricted to the developer, except for followerCount which can be updated by any signed-in user.
      */
     match /developers/{developerId} {
-      function isOwner(developerId) {
-        return request.auth != null && request.auth.uid == developerId;
-      }
-
-
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.auth.uid == developerId;
-      allow update: if isSignedIn() && request.auth.uid == developerId;
-      allow delete: if isSignedIn() && request.auth.uid == developerId;
+      allow get, list: if true;
+      allow create: if isOwner(developerId);
+      allow update: if isSignedIn() && (
+        isOwner(developerId) || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount'])
+      );
+      allow delete: if isOwner(developerId);
     }
   }
 }
