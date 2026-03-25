@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -67,8 +68,16 @@ function DeveloperProfilePageComponent() {
   }, [userAccount, developerId]);
 
   const handleFollowToggle = async () => {
-    if (!user || !firestore || !developerDocRef || !userDocRef) {
-      toast({ title: 'You must be logged in to follow developers.', variant: 'destructive'});
+    if (!user) {
+      toast({ 
+        title: 'Authentication Required', 
+        description: 'Please log in to follow developers.', 
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!firestore || !developerDocRef || !userDocRef) {
       return;
     }
     
@@ -81,8 +90,6 @@ function DeveloperProfilePageComponent() {
     runTransaction(firestore, async (transaction) => {
         const devDoc = await transaction.get(developerDocRef);
         
-        // If developer profile doesn't exist, we can't increment followerCount.
-        // However, we should try to create it if we have at least one game to pull a name from.
         if (!devDoc.exists()) {
             const firstGame = publishedGames?.[0];
             if (firstGame) {
@@ -96,16 +103,14 @@ function DeveloperProfilePageComponent() {
                 throw new Error("Developer profile not found and no games found to initialize it.");
             }
         } else {
-            // Update the developer's follower count
             transaction.update(developerDocRef, {
                 followerCount: increment(isFollowing ? -1 : 1)
             });
         }
 
-        // Use set with merge: true for the user document to handle cases where the doc doesn't exist yet.
         transaction.set(userDocRef, {
             ...followData,
-            email: user.email, // Ensure email is present if creating
+            email: user.email,
         }, { merge: true });
         
     })
@@ -126,7 +131,7 @@ function DeveloperProfilePageComponent() {
             errorEmitter.emit('permission-error', permissionError);
         } else {
             toast({ 
-                title: "Follow Action Failed", 
+                title: "Action Failed", 
                 description: error.message || "Could not update follow status.", 
                 variant: "destructive"
             });
@@ -198,6 +203,12 @@ function DeveloperProfilePageComponent() {
                 <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
                     {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Rss className="mr-2 h-4 w-4" />}
                     {isFollowing ? 'Unfollow' : 'Follow'}
+                </Button>
+            )}
+            {!user && (
+                <Button onClick={handleFollowToggle} variant="outline">
+                    <Rss className="mr-2 h-4 w-4" />
+                    Follow
                 </Button>
             )}
         </div>

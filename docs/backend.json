@@ -37,6 +37,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "developerName": {
+          "type": "string",
+          "description": "The public display name of the developer if they have a developer role."
         }
       },
       "required": [
@@ -168,6 +172,9 @@
               },
               "rating": {
                 "type": "number"
+              },
+              "comment": {
+                "type": "string"
               }
             }
           }
@@ -184,6 +191,10 @@
         "featuredDescription": {
           "type": "string",
           "description": "A short description used when the game is featured."
+        },
+        "genre": {
+          "type": "string",
+          "description": "The genre of the game."
         }
       },
       "required": [
@@ -319,5 +330,3 @@
     "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability, following the specified design principles. User accounts are stored in `/users/{userId}`, with wishlists as subcollections.  This structure avoids hierarchical authorization dependencies by relying solely on `request.auth.uid` and path-based ownership for user-specific data. Games are stored in a top-level `/games` collection. A new top-level collection `/publishedGames` is added for developer-published content, with publisher ownership enforced through security rules. A `/developers` collection is added to store public developer profiles, linking them to their games and allowing for public profile pages. Authorization Independence is achieved since there is no need for `get()` calls to check parent document data, as ownership is implied by the path for user-owned resources. The structure supports the required QAPs by segregating data based on access needs."
   }
 }
-
-    

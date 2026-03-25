@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -7,7 +8,7 @@ import { doc, updateDoc, runTransaction } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Star, Download, Edit, Heart, ChevronRight, Gamepad, Trash2 } from 'lucide-react';
+import { Loader2, Star, Download, Edit, Heart, ChevronRight, Gamepad, Trash2, Send, User } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,8 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useWishlist } from '@/contexts/wishlist-context';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +41,7 @@ interface PublishedGame {
   developerName: string;
   downloads: number;
   averageRating: number;
-  ratings: { userId: string; rating: number }[];
+  ratings: { userId: string; rating: number; comment?: string }[];
   createdAt: any;
   whatsNew?: string;
   whatsNewSummary?: string;
@@ -92,6 +95,7 @@ function GameDetailPageComponent() {
   const { toast } = useToast();
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [reviewComment, setReviewComment] = useState("");
   const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
 
   const gameDocRef = useMemoFirebase(() => {
@@ -112,7 +116,8 @@ function GameDetailPageComponent() {
     }
   };
 
-  const userRating = game?.ratings.find(r => r.userId === user?.uid)?.rating || 0;
+  const existingRating = useMemo(() => game?.ratings.find(r => r.userId === user?.uid), [game, user]);
+  const userRating = existingRating?.rating || 0;
   
   const ratingDistribution = useMemo(() => {
     if (!game || !game.ratings.length) return [0,0,0,0,0];
@@ -134,13 +139,11 @@ function GameDetailPageComponent() {
 
     setIsSubmittingRating(true);
 
-    const existingRating = game.ratings.find(r => r.userId === user.uid);
-
     let newRatings;
     if(existingRating) {
-        newRatings = game.ratings.map(r => r.userId === user.uid ? { userId: user.uid, rating } : r)
+        newRatings = game.ratings.map(r => r.userId === user.uid ? { userId: user.uid, rating, comment: reviewComment || r.comment } : r)
     } else {
-        newRatings = [...game.ratings, { userId: user.uid, rating }];
+        newRatings = [...game.ratings, { userId: user.uid, rating, comment: reviewComment }];
     }
     
     const totalRating = newRatings.reduce((acc, r) => acc + r.rating, 0);
@@ -152,6 +155,10 @@ function GameDetailPageComponent() {
     };
 
     updateDoc(gameDocRef, updateData)
+        .then(() => {
+             toast({ title: "Rating submitted!", description: `You rated ${game.gameName} ${rating} stars.` });
+             setReviewComment("");
+        })
         .catch(async (serverError) => {
             const permissionError = new FirestorePermissionError({
                 path: gameDocRef.path,
@@ -159,11 +166,10 @@ function GameDetailPageComponent() {
                 requestResourceData: updateData,
             });
             errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+            setIsSubmittingRating(false);
         });
-
-    // Optimistic update
-    toast({ title: "Rating submitted!", description: `You rated ${game.gameName} ${rating} stars.` });
-    setIsSubmittingRating(false);
   };
 
   const handleInstallClick = () => {
@@ -421,6 +427,39 @@ function GameDetailPageComponent() {
                 ))}
             </div>
         </div>
+
+        {/* Individual Reviews List */}
+        <div className="mt-8 space-y-6">
+            {game.ratings.filter(r => r.comment).length > 0 ? (
+                game.ratings.filter(r => r.comment).map((rating, idx) => (
+                    <div key={`${rating.userId}-${idx}`} className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-primary/10 text-primary">
+                                    <User className="h-4 w-4" />
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium">Guest User</span>
+                                <div className="flex items-center gap-1">
+                                    <div className="flex items-center">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star key={star} className={cn('h-2 w-2', rating.rating >= star ? 'text-primary fill-primary' : 'text-muted-foreground/20')} />
+                                        ))}
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground">Recent</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground pl-11">
+                            {rating.comment}
+                        </p>
+                    </div>
+                ))
+            ) : (
+                <p className="text-center text-sm text-muted-foreground py-4">No textual reviews yet. Be the first!</p>
+            )}
+        </div>
       </section>
 
       {/* Rate This App Section */}
@@ -431,9 +470,32 @@ function GameDetailPageComponent() {
                 <p className="text-sm text-muted-foreground">Tell others what you think</p>
             </div>
             <StarRating currentRating={userRating} onRate={handleRateGame} disabled={!user || isSubmittingRating} />
-            <p className="text-xs font-medium text-primary">
-                {user ? (isSubmittingRating ? "Submitting..." : (userRating > 0 ? "Edit your rating" : "Write a review")) : "Log in to rate"}
-            </p>
+            
+            {user && (
+                <div className="w-full max-w-md space-y-2">
+                    <Textarea 
+                        placeholder="Write a review (optional)..." 
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        className="min-h-[100px] text-sm"
+                    />
+                    <Button 
+                        size="sm" 
+                        onClick={() => handleRateGame(userRating)} 
+                        disabled={isSubmittingRating || !userRating}
+                        className="w-full"
+                    >
+                        {isSubmittingRating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        Submit Review
+                    </Button>
+                </div>
+            )}
+
+            {!user && (
+                <p className="text-xs font-medium text-primary">
+                    Log in to rate and review
+                </p>
+            )}
         </div>
       </section>
     </div>

@@ -1,5 +1,4 @@
 
-
 import type { ImagePlaceholder } from './placeholder-images';
 
 export type Game = {
@@ -17,6 +16,7 @@ export type Game = {
   isFeatured?: boolean;
   featuredDescription?: string;
   downloads?: number;
+  ratings?: { userId: string; rating: number; comment?: string }[];
 };
 
 export interface UserAccount {
