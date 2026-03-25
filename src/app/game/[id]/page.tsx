@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore, useUser, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, runTransaction } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Star, Download, Edit, Heart, ChevronRight, Gamepad } from 'lucide-react';
+import { Loader2, Star, Download, Edit, Heart, ChevronRight, Gamepad, Trash2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,17 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useWishlist } from '@/contexts/wishlist-context';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface PublishedGame {
   id: string;
@@ -73,11 +84,13 @@ function StarRating({ currentRating, onRate, disabled }: { currentRating: number
 
 function GameDetailPageComponent() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
 
   const gameDocRef = useMemoFirebase(() => {
@@ -154,6 +167,43 @@ function GameDetailPageComponent() {
       updateDoc(gameDocRef, {
           downloads: (game.downloads || 0) + 1
       });
+    }
+  };
+
+  const handleDeleteGame = async () => {
+    if (!user || !game || !gameDocRef || !firestore) return;
+
+    setIsDeleting(true);
+    try {
+        const developerRef = doc(firestore, 'developers', user.uid);
+        
+        await runTransaction(firestore, async (transaction) => {
+            const devDoc = await transaction.get(developerRef);
+            
+            if (devDoc.exists()) {
+                const currentCount = devDoc.data().gameCount || 0;
+                transaction.update(developerRef, {
+                    gameCount: Math.max(0, currentCount - 1)
+                });
+            }
+            
+            transaction.delete(gameDocRef);
+        });
+
+        toast({
+            title: 'Game Deleted',
+            description: `${game.gameName} has been removed from the store.`,
+        });
+        router.push('/my-apps');
+    } catch (error: any) {
+        console.error("Deletion failed:", error);
+        toast({
+            title: "Deletion Failed",
+            description: error.message || "Could not delete the game.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsDeleting(false);
     }
   };
   
@@ -237,16 +287,40 @@ function GameDetailPageComponent() {
                 {wishlisted ? 'In Wishlist' : 'Add to Wishlist'}
             </Button>
             {isPublisher && (
-              <Button asChild variant="outline" size="icon">
-                <Link href={`/game/${id}/edit`}>
-                  <Edit className="h-5 w-5" />
-                </Link>
-              </Button>
+                <>
+                <Button asChild variant="outline" size="icon">
+                    <Link href={`/game/${id}/edit`}>
+                    <Edit className="h-5 w-5" />
+                    </Link>
+                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-5 w-5" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete <strong>{game.gameName}</strong> and remove all associated data. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteGame} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                Delete Game
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                </>
             )}
         </div>
       </section>
 
-      {/* Screenshots Carousel - Now using Gradients */}
+      {/* Screenshots Carousel - Using Gradients */}
       <section className="pt-2">
           <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
             <CarouselContent className="-ml-2">

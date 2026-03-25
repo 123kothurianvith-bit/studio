@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -86,8 +87,8 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
       allow create: if isSignedIn() && request.resource.data.publisherId == request.auth.uid;
-      allow update: if isSignedIn() && request.resource.data.publisherId == resource.data.publisherId && request.auth.uid == resource.data.publisherId;
-      allow delete: if isSignedIn() && request.resource.data.publisherId == resource.data.publisherId && request.auth.uid == resource.data.publisherId;
+      allow update: if isSignedIn() && resource.data.publisherId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.publisherId == request.auth.uid;
     }
 
     /**
