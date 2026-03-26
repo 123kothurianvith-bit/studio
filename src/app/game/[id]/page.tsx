@@ -41,7 +41,7 @@ interface PublishedGame {
   developerName: string;
   downloads: number;
   averageRating: number;
-  ratings: { userId: string; rating: number; comment?: string }[];
+  ratings: { userId: string; userName?: string; rating: number; comment?: string }[];
   createdAt: any;
   whatsNew?: string;
   whatsNewSummary?: string;
@@ -139,11 +139,13 @@ function GameDetailPageComponent() {
 
     setIsSubmittingRating(true);
 
+    const userName = user.email?.split('@')[0] || "User";
+
     let newRatings;
     if(existingRating) {
-        newRatings = game.ratings.map(r => r.userId === user.uid ? { userId: user.uid, rating, comment: reviewComment || r.comment } : r)
+        newRatings = game.ratings.map(r => r.userId === user.uid ? { ...r, userName, rating, comment: reviewComment || r.comment } : r)
     } else {
-        newRatings = [...game.ratings, { userId: user.uid, rating, comment: reviewComment }];
+        newRatings = [...game.ratings, { userId: user.uid, userName, rating, comment: reviewComment }];
     }
     
     const totalRating = newRatings.reduce((acc, r) => acc + r.rating, 0);
@@ -237,7 +239,6 @@ function GameDetailPageComponent() {
   
   const isPublisher = user && game && user.uid === game.publisherId;
 
-  // Derive gradient based on ID
   const charCodeSum = useMemo(() => id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0), [id]);
   const primaryGradient = gradients[charCodeSum % gradients.length];
 
@@ -259,7 +260,6 @@ function GameDetailPageComponent() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 pb-20 pt-4 px-4 sm:pt-8">
-      {/* Header Section */}
       <section className="flex items-start gap-4 sm:gap-6">
         <div className={cn("relative h-20 w-20 shrink-0 flex items-center justify-center rounded-2xl shadow-md sm:h-28 sm:w-28 bg-gradient-to-br", primaryGradient)}>
            <Gamepad className="h-10 w-10 text-white/40 sm:h-14 sm:w-14" />
@@ -273,7 +273,6 @@ function GameDetailPageComponent() {
         </div>
       </section>
 
-      {/* Metadata Row */}
       <section className="flex items-center justify-around py-2 sm:justify-start sm:gap-12">
         <div className="flex flex-col items-center gap-1 sm:items-start">
             <div className="flex items-center gap-1 text-sm font-bold sm:text-base">
@@ -296,7 +295,6 @@ function GameDetailPageComponent() {
         </div>
       </section>
 
-      {/* Primary Actions */}
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Button 
             onClick={handleInstallClick} 
@@ -348,7 +346,6 @@ function GameDetailPageComponent() {
         </div>
       </section>
 
-      {/* screenshots section */}
       <section className="pt-2">
           <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
             <CarouselContent className="-ml-2">
@@ -366,7 +363,6 @@ function GameDetailPageComponent() {
           </Carousel>
       </section>
 
-      {/* About Section */}
       <section className="space-y-3 pt-4">
           <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold sm:text-xl">About this game</h2>
@@ -384,7 +380,6 @@ function GameDetailPageComponent() {
 
       <Separator />
 
-      {/* What's New Section */}
       {(game.whatsNew || game.whatsNewSummary) && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -402,7 +397,6 @@ function GameDetailPageComponent() {
         </section>
       )}
 
-      {/* Ratings Section */}
       <section className="space-y-4 pt-4">
         <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold sm:text-xl">Ratings and reviews</h2>
@@ -428,7 +422,6 @@ function GameDetailPageComponent() {
             </div>
         </div>
 
-        {/* Individual Reviews List */}
         <div className="mt-8 space-y-6">
             {game.ratings.filter(r => r.comment).length > 0 ? (
                 game.ratings.filter(r => r.comment).map((rating, idx) => (
@@ -440,7 +433,7 @@ function GameDetailPageComponent() {
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col">
-                                <span className="text-sm font-medium">Guest User</span>
+                                <span className="text-sm font-medium">{rating.userName || 'User'}</span>
                                 <div className="flex items-center gap-1">
                                     <div className="flex items-center">
                                         {[1, 2, 3, 4, 5].map((star) => (
@@ -462,7 +455,6 @@ function GameDetailPageComponent() {
         </div>
       </section>
 
-      {/* Rate This App Section */}
       <section className="rounded-2xl border bg-card p-6 shadow-sm">
         <div className="flex flex-col items-center gap-4 text-center">
             <div className="space-y-1">

@@ -170,6 +170,10 @@
               "userId": {
                 "type": "string"
               },
+              "userName": {
+                "type": "string",
+                "description": "The display name of the user who left the rating."
+              },
               "rating": {
                 "type": "number"
               },
