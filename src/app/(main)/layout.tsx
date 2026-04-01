@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
@@ -38,7 +38,9 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
           <div className="relative ml-auto flex flex-1 items-center gap-2">
-              <GameSearch gameNames={gameNames}/>
+              <Suspense fallback={<div className="w-full" />}>
+                <GameSearch gameNames={gameNames}/>
+              </Suspense>
               <ThemeToggle />
           </div>
         </header>

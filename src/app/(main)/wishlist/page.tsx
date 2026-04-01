@@ -9,14 +9,14 @@ import type { Game } from '@/lib/types';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { useMemo } from 'react';
+import { useMemo, Suspense } from 'react';
 
 // NOTE: This is a placeholder implementation.
 // The wishlist context currently only stores game IDs.
 // To fully implement this, you'd need to fetch game details for each ID.
 // For now, we show nothing until this is properly implemented with Firestore.
 
-export default function WishlistPage() {
+function WishlistContent() {
   const { wishlist } = useWishlist();
   const firestore = useFirestore();
 
@@ -45,7 +45,6 @@ export default function WishlistPage() {
     }));
   }, [wishlistedGamesData]);
 
-
   return (
     <div className="container mx-auto py-8">
       <h1 className="mb-8 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Your Wishlist</h1>
@@ -67,6 +66,14 @@ export default function WishlistPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WishlistPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <WishlistContent />
+    </Suspense>
   );
 }
 
