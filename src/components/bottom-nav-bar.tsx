@@ -63,11 +63,11 @@ export default function BottomNavBar() {
         ))}
 
         {isUserLoading ? (
-           <div className="flex flex-col items-center justify-center gap-1 rounded-md p-2 text-sm font-medium text-muted-foreground">
+           <div className="flex flex-col items-center justify-center gap-1 rounded-md p-2 text-sm font-medium text-muted-foreground transition-colors">
              <Avatar className="h-6 w-6">
                <AvatarFallback>?</AvatarFallback>
              </Avatar>
-            <span className="text-xs whitespace-nowrap">Account</span>
+            <span className="whitespace-nowrap text-xs">Account</span>
            </div>
         ) : user ? (
           <DropdownMenu>
