@@ -47,13 +47,13 @@ export default function BottomNavBar() {
 
   return (
     <nav className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 backdrop-blur-sm w-full">
-      <div className="mx-auto flex h-16 items-center justify-around px-4">
+      <div className="mx-auto flex h-16 items-center justify-center gap-0 px-4 max-w-7xl w-full">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              'flex flex-col items-center justify-center gap-1 rounded-md p-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+              'flex flex-col items-center justify-center gap-1 flex-1 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
               pathname === item.href && 'text-primary'
             )}
           >
@@ -63,7 +63,7 @@ export default function BottomNavBar() {
         ))}
 
         {isUserLoading ? (
-           <div className="flex flex-col items-center justify-center gap-1 rounded-md p-2 text-sm font-medium text-muted-foreground transition-colors">
+           <div className="flex flex-col items-center justify-center gap-1 flex-1 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground transition-colors">
              <Avatar className="h-6 w-6">
                <AvatarFallback>?</AvatarFallback>
              </Avatar>
@@ -72,7 +72,7 @@ export default function BottomNavBar() {
         ) : user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button className={cn('flex flex-col items-center justify-center gap-1 rounded-md p-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground', pathname === '/account' && 'text-primary' )}>
+                <button className={cn('flex flex-col items-center justify-center gap-1 flex-1 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground', pathname === '/account' && 'text-primary' )}>
                     <Avatar className="h-6 w-6">
                         <AvatarImage src={user.photoURL || undefined} alt="User avatar" />
                         <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
@@ -100,7 +100,7 @@ export default function BottomNavBar() {
             <Link
               href="/login"
               className={cn(
-                'flex flex-col items-center justify-center gap-1 rounded-md p-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+                'flex flex-col items-center justify-center gap-1 flex-1 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
                 pathname === '/login' && 'text-primary'
               )}
             >

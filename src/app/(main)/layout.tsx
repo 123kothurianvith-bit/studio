@@ -44,7 +44,7 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto mx-auto w-full max-w-7xl">{children}</main>
         <BottomNavBar />
       </div>
   );
