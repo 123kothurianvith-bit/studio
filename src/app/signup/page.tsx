@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const formSchema = z.object({
+  displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   role: z.enum(['user', 'developer']),
@@ -43,6 +44,7 @@ function SignUpComponent() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      displayName: "",
       email: "",
       password: "",
       role: "user",
@@ -59,7 +61,7 @@ function SignUpComponent() {
     if (!auth) return;
     setIsSubmitting(true);
     try {
-        initiateEmailSignUp(auth, values.email, values.password, { role: values.role });
+        initiateEmailSignUp(auth, values.email, values.password, { role: values.role, displayName: values.displayName });
         toast({
             title: "Account Created",
             description: "You have been successfully signed up.",
@@ -95,6 +97,19 @@ function SignUpComponent() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., GamerX" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"

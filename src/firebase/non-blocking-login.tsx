@@ -19,17 +19,18 @@ export function initiateEmailSignUp(
   authInstance: Auth,
   email: string,
   password: string,
-  profileData: { role: 'user' | 'developer' }
+  profileData: { role: 'user' | 'developer'; displayName?: string }
 ): void {
   createUserWithEmailAndPassword(authInstance, email, password)
     .then(userCredential => {
       const user = userCredential.user;
       const firestore = getFirestore(authInstance.app);
       const userDocRef = doc(firestore, 'users', user.uid);
-      
+
       setDoc(userDocRef, {
         email: user.email,
         role: profileData.role,
+        displayName: profileData.displayName || '',
       }, { merge: true });
     })
     .catch(error => {

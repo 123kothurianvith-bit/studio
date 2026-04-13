@@ -137,13 +137,18 @@ function GameDetailPageComponent() {
     }
     if (!game || !gameDocRef) return;
 
+    if (!reviewComment.trim()) {
+        toast({ title: "Review required", description: "Please write a review before submitting.", variant: 'destructive' });
+        return;
+    }
+
     setIsSubmittingRating(true);
 
-    const userName = user.email?.split('@')[0] || "User";
+    const userName = user.profile?.displayName || user.email?.split('@')[0] || "User";
 
     let newRatings;
     if(existingRating) {
-        newRatings = game.ratings.map(r => r.userId === user.uid ? { ...r, userName, rating, comment: reviewComment || r.comment } : r)
+        newRatings = game.ratings.map(r => r.userId === user.uid ? { ...r, userName, rating, comment: reviewComment } : r)
     } else {
         newRatings = [...game.ratings, { userId: user.uid, userName, rating, comment: reviewComment }];
     }
@@ -465,16 +470,19 @@ function GameDetailPageComponent() {
             
             {user && (
                 <div className="w-full max-w-md space-y-2">
-                    <Textarea 
-                        placeholder="Write a review (optional)..." 
+                    <Textarea
+                        placeholder="Write a review (required)..."
                         value={reviewComment}
                         onChange={(e) => setReviewComment(e.target.value)}
                         className="min-h-[100px] text-sm"
                     />
-                    <Button 
-                        size="sm" 
-                        onClick={() => handleRateGame(userRating)} 
-                        disabled={isSubmittingRating || !userRating}
+                    <p className="text-xs text-muted-foreground text-left">
+                        Posting as <span className="font-medium text-foreground">{user.profile?.displayName || user.email?.split('@')[0] || 'User'}</span>
+                    </p>
+                    <Button
+                        size="sm"
+                        onClick={() => handleRateGame(userRating)}
+                        disabled={isSubmittingRating || !userRating || !reviewComment.trim()}
                         className="w-full"
                     >
                         {isSubmittingRating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}

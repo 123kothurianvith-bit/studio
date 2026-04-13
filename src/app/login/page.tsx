@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { useAuth, useUser, FirebaseClientProvider } from '@/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,15 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -32,10 +42,31 @@ type FormValues = z.infer<typeof formSchema>;
 
 function LoginComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+
+  async function handleForgotPassword() {
+    if (!resetEmail || !resetEmail.includes('@')) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+    setIsResetting(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({ title: "Reset email sent", description: "Check your inbox for a password reset link." });
+      setResetDialogOpen(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast({ title: "Failed to send reset email", description: error.message || "An unexpected error occurred.", variant: "destructive" });
+    } finally {
+      setIsResetting(false);
+    }
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -109,7 +140,38 @@ function LoginComponent() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Password</FormLabel>
+                      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                        <DialogTrigger asChild>
+                          <button type="button" className="text-xs text-primary underline-offset-4 hover:underline">
+                            Forgot password?
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Reset your password</DialogTitle>
+                            <DialogDescription>
+                              Enter your email address and we will send you a link to reset your password.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-2">
+                            <Input
+                              type="email"
+                              placeholder="m@example.com"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={handleForgotPassword} disabled={isResetting} className="w-full">
+                              {isResetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Send reset link
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
