@@ -22,8 +22,7 @@ export type Game = {
 export interface UserAccount {
     role: 'user' | 'developer';
     email: string;
-    displayName?: string;
     wishlistIds?: string[];
     followingDeveloperIds?: string[];
-    developerName?: string;
+    developerName?: string; // Storing public dev name here after first publish
 }
