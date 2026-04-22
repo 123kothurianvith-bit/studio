@@ -1,53 +1,51 @@
-import firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { getAuth, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
 
-// Firebase configuration
+// Your web app's Firebase configuration
 const firebaseConfig = {
-    // Your Firebase config here
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_STORAGE_BUCKET',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: 'YOUR_APP_ID'
 };
 
 // Initialize Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+const app = initializeApp(firebaseConfig);
 
-const db = firebase.firestore();
+const NonBlockingLogin = () => {
+  const [user, setUser] = useState(null);
+  const auth = getAuth(app);
+  const provider = new GithubAuthProvider();
 
-// Email Sign-Up Function
-export const emailSignUp = async (email, password) => {
+  const handleLogin = async () => {
     try {
-        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-        // Store user info in Firestore
-        await db.collection('users').doc(userCredential.user.uid).set({ email });
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      setUser(user);
     } catch (error) {
-        console.error('Error during sign up:', error);
+      console.error('Error during GitHub sign-in:', error);
     }
+  };
+
+  useEffect(() => {
+    // Logic for checking user authentication can go here
+  }, []);
+
+  return (
+    <div>
+      {user ? (
+        <div>
+          <h2>Welcome, {user.displayName}</h2>
+          <p>{user.email}</p>
+        </div>
+      ) : (
+        <button onClick={handleLogin}>Sign in with GitHub</button>
+      )}
+    </div>
+  );
 };
 
-// Email Sign-In Function
-export const emailSignIn = async (email, password) => {
-    try {
-        await firebase.auth().signInWithEmailAndPassword(email, password);
-    } catch (error) {
-        console.error('Error during sign in:', error);
-    }
-};
-
-// GitHub Sign-In Function
-export const initiateGitHubSignIn = () => {
-    const provider = new firebase.auth.GithubAuthProvider();
-    firebase.auth().signInWithPopup(provider)
-        .then((result) => {
-            const user = result.user;
-            // Store user info in Firestore
-            db.collection('users').doc(user.uid).set({
-                email: user.email,
-                displayName: user.displayName,
-                photoURL: user.photoURL
-            });
-        })
-        .catch((error) => {
-            console.error('Error during GitHub sign-in:', error);
-        });
-};
+export default NonBlockingLogin;
